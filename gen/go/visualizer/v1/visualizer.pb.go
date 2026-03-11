@@ -3442,7 +3442,7 @@ const file_visualizer_v1_visualizer_proto_rawDesc = "" +
 	")GetProjectByWorkspaceAliasAndProjectAlias\x12G.reearth.visualizer.v1.GetProjectByWorkspaceAliasAndProjectAliasRequest\x1aH.reearth.visualizer.v1.GetProjectByWorkspaceAliasAndProjectAliasResponse\"\x00\x12\xc9\x01\n" +
 	",UpdateProjectByWorkspaceAliasAndProjectAlias\x12J.reearth.visualizer.v1.UpdateProjectByWorkspaceAliasAndProjectAliasRequest\x1aK.reearth.visualizer.v1.UpdateProjectByWorkspaceAliasAndProjectAliasResponse\"\x00\x12\xc9\x01\n" +
 	",DeleteProjectByWorkspaceAliasAndProjectAlias\x12J.reearth.visualizer.v1.DeleteProjectByWorkspaceAliasAndProjectAliasRequest\x1aK.reearth.visualizer.v1.DeleteProjectByWorkspaceAliasAndProjectAliasResponse\"\x00\x12o\n" +
-	"\x0ePatchStarCount\x12,.reearth.visualizer.v1.PatchStarCountRequest\x1a-.reearth.visualizer.v1.PatchStarCountResponse\"\x00BHZFgithub.com/reearth/reearth-proto/gen/go/visualizer/v1;visualizerv1b\x06proto3"
+	"\x0ePatchStarCount\x12,.reearth.visualizer.v1.PatchStarCountRequest\x1a-.reearth.visualizer.v1.PatchStarCountResponse\"\x00BDZBgithub.com/reearth/reearth-proto/gen/go/visualizer/v1;visualizerv1b\x06proto3"
 
 var (
 	file_visualizer_v1_visualizer_proto_rawDescOnce sync.Once
