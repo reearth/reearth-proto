@@ -1,17 +1,27 @@
-.PHONY: generate lint breaking tag-dev tag-prod push
+.PHONY: generate lint breaking tag-dev tag-prod push setup
+
+# Install buf if not present
+setup:
+	@if ! command -v buf &> /dev/null; then \
+		echo "Installing buf..."; \
+		go install github.com/bufbuild/buf/cmd/buf@latest; \
+		echo "✅ buf installed"; \
+	else \
+		echo "✅ buf already installed"; \
+	fi
 
 # Generate Go code from proto files
-generate:
+generate: setup
 	@echo "Generating Go code from proto files..."
 	@buf generate
 
 # Lint proto files
-lint:
+lint: setup
 	@echo "Linting proto files..."
 	@buf lint
 
 # Check for breaking changes against main branch
-breaking:
+breaking: setup
 	@echo "Checking for breaking changes..."
 	@buf breaking --against '.git#branch=main'
 

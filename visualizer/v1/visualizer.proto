@@ -4,7 +4,7 @@ package reearth.visualizer.v1;
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/eukarya-inc/reearth-proto/gen/go/visualizer/v1;visualizerv1";
+option go_package = "github.com/reearth/reearth-proto/gen/go/visualizer/v1;visualizerv1";
 
 service ReEarthVisualizer {
   // Retrieves the list of projects the user can access.

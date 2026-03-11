@@ -174,7 +174,7 @@ jobs:
           echo "View tag: https://github.com/$REPO/releases/tag/$VERSION"
           echo ""
           echo "Dashboard engineers can now use:"
-          echo "  go get github.com/eukarya-inc/reearth-proto@$VERSION"
+          echo "  go get github.com/reearth/reearth-proto@$VERSION"
           echo ""
           echo "Changes:"
           echo "$CHANGELOG"
