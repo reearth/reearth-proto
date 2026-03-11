@@ -2651,7 +2651,7 @@ const file_cms_v1_cms_proto_rawDesc = "" +
 	"\tListItems\x12 .reearth.cms.v1.ListItemsRequest\x1a!.reearth.cms.v1.ListItemsResponse\"\x00\x12\\\n" +
 	"\x11GetModelExportURL\x12\".reearth.cms.v1.ModelExportRequest\x1a!.reearth.cms.v1.ExportURLResponse\"\x00\x12a\n" +
 	"\x18GetModelGeoJSONExportURL\x12\x1d.reearth.cms.v1.ExportRequest\x1a!.reearth.cms.v1.ExportURLResponse\"\x03\x88\x02\x01\x12J\n" +
-	"\vStarProject\x12\x1b.reearth.cms.v1.StarRequest\x1a\x1c.reearth.cms.v1.StarResponse\"\x00B:Z8github.com/eukarya-inc/reearth-proto/gen/go/cms/v1;cmsv1b\x06proto3"
+	"\vStarProject\x12\x1b.reearth.cms.v1.StarRequest\x1a\x1c.reearth.cms.v1.StarResponse\"\x00B:Z8github.com/reearth/reearth-proto/gen/go/cms/v1;cmsv1b\x06proto3"
 
 var (
 	file_cms_v1_cms_proto_rawDescOnce sync.Once

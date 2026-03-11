@@ -32,15 +32,15 @@ v1.2.3
 ### As Go Module
 
 ```bash
-go get github.com/eukarya-inc/reearth-proto@v1.0.0
+go get github.com/reearth/reearth-proto@v1.0.0
 ```
 
 ### Import in Go
 
 ```go
 import (
-    cmspb "github.com/eukarya-inc/reearth-proto/gen/go/cms/v1"
-    vispb "github.com/eukarya-inc/reearth-proto/gen/go/visualizer/v1"
+    cmspb "github.com/reearth/reearth-proto/gen/go/cms/v1"
+    vispb "github.com/reearth/reearth-proto/gen/go/visualizer/v1"
 )
 ```
 
@@ -91,7 +91,7 @@ When updating proto files in CMS or Visualizer:
 
 **Option 1: Via GitHub UI (Recommended)**
 
-1. Go to https://github.com/eukarya-inc/reearth-proto/actions/workflows/create-prod-tag.yml
+1. Go to https://github.com/reearth/reearth-proto/actions/workflows/create-prod-tag.yml
 2. Click "Run workflow" (green button)
 3. Select version bump type:
    - **patch** (v1.0.0 → v1.0.1) - Bug fixes, no API changes
@@ -120,25 +120,25 @@ make tag-prod VERSION=v1.0.0
 ```bash
 # Patch bump (v1.0.0 → v1.0.1)
 gh workflow run create-prod-tag.yml \
-  --repo eukarya-inc/reearth-proto \
+  --repo reearth/reearth-proto \
   -f bump_type=patch \
   -f release_notes="Bug fixes"
 
 # Minor bump (v1.0.0 → v1.1.0)
 gh workflow run create-prod-tag.yml \
-  --repo eukarya-inc/reearth-proto \
+  --repo reearth/reearth-proto \
   -f bump_type=minor \
   -f release_notes="New features"
 
 # Major bump (v1.0.0 → v2.0.0)
 gh workflow run create-prod-tag.yml \
-  --repo eukarya-inc/reearth-proto \
+  --repo reearth/reearth-proto \
   -f bump_type=major \
   -f release_notes="Breaking changes"
 
 # Custom version
 gh workflow run create-prod-tag.yml \
-  --repo eukarya-inc/reearth-proto \
+  --repo reearth/reearth-proto \
   -f bump_type=custom \
   -f custom_version=v1.0.0
 ```
