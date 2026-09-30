@@ -370,13 +370,9 @@ type Project struct {
 	// Scene Publishment value
 	PublishmentStatus PublishmentStatus `protobuf:"varint,20,opt,name=publishment_status,json=publishmentStatus,proto3,enum=reearth.visualizer.v1.PublishmentStatus" json:"publishment_status,omitempty"`
 	// Scene Publishment value
-	PublishedUrl *string `protobuf:"bytes,21,opt,name=published_url,json=publishedUrl,proto3,oneof" json:"published_url,omitempty"`
-	// ID of the user who created the project.
-	// Empty for projects created before authorship was recorded.
-	CreatedBy string `protobuf:"bytes,22,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
-	// ID of the user who last updated the project.
-	// Empty for projects last updated before authorship was recorded.
-	UpdatedBy     string `protobuf:"bytes,23,opt,name=updated_by,json=updatedBy,proto3" json:"updated_by,omitempty"`
+	PublishedUrl  *string `protobuf:"bytes,21,opt,name=published_url,json=publishedUrl,proto3,oneof" json:"published_url,omitempty"`
+	CreatedBy     string  `protobuf:"bytes,22,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
+	UpdatedBy     string  `protobuf:"bytes,23,opt,name=updated_by,json=updatedBy,proto3" json:"updated_by,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

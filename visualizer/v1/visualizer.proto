@@ -140,12 +140,7 @@ message Project {
   // Scene Publishment value
   optional string published_url = 21;
 
-  // ID of the user who created the project.
-  // Empty for projects created before authorship was recorded.
   string created_by = 22;
-
-  // ID of the user who last updated the project.
-  // Empty for projects last updated before authorship was recorded.
   string updated_by = 23;
 }
 
