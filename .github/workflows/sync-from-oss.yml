@@ -1,9 +1,42 @@
+# DISABLED - do not re-enable without reading this first.
+#
+# This job mirrored proto files from the OSS repos into this one. Both halves
+# are currently unsafe or obsolete:
+#
+# VISUALIZER (removed below)
+#   reearth-visualizer deleted its proto in reearth/reearth-visualizer#2189
+#   (2026-05-11) and now depends on this module instead, so reearth-proto is the
+#   source of truth for visualizer/v1/visualizer.proto. The URL below 404s, and
+#   because curl had no -f, the job downloaded a 14-byte "404: Not Found" page
+#   and committed it over the schema (573 deletions). The only thing that kept
+#   that off main was the tag push failing on a 403, since github-actions[bot]
+#   has no write access. Those steps are commented out below.
+#
+# CMS (kept, but the schedule is off)
+#   reearth-cms still owns server/schemas/internalapi/v1/schema.proto and
+#   generates its own Go code from it - it does not consume this module. The
+#   copy here exists for reearth-dashboard, which imports
+#   reearth-proto/gen/go/cms/v1 in ~35 places. So the dashboard's client stubs
+#   and the CMS server's stubs come from two separate copies of the same
+#   schema, and this job was the only thing keeping them equal. A mismatch
+#   would not fail any build - it surfaces at runtime as empty fields or a
+#   missing RPC.
+#
+#   OPEN DISCUSSION: should reearth-cms depend on reearth-proto the way
+#   visualizer now does? That removes the duplicate copy and the need to sync
+#   at all. Until that is decided, update cms/v1/cms.proto by hand when CMS
+#   changes its schema. Last CMS proto change: 2025-11-11 (reearth-cms#1706).
+#
+# The bot's write access is not being restored, so this job cannot push even if
+# triggered manually.
+
 name: Sync Proto from OSS Repos
 
 on:
-  schedule:
-    # Run every 6 hours
-    - cron: '0 */6 * * *'
+  # Schedule disabled - see the note at the top of this file.
+  # schedule:
+  #   # Run every 6 hours
+  #   - cron: '0 */6 * * *'
   workflow_dispatch:
     # Allow manual trigger
 
@@ -33,19 +66,21 @@ jobs:
 
       - name: Download CMS Proto
         run: |
-          curl -o cms/v1/cms.proto.new \
+          curl -fsS -o cms/v1/cms.proto.new \
             https://raw.githubusercontent.com/reearth/reearth-cms/main/server/schemas/internalapi/v1/schema.proto
           # Update go_package path
           sed -i 's|option go_package = "proto/v1";|option go_package = "github.com/reearth/reearth-proto/gen/go/cms/v1;cmsv1";|' \
             cms/v1/cms.proto.new
 
-      - name: Download Visualizer Proto
-        run: |
-          curl -o visualizer/v1/visualizer.proto.new \
-            https://raw.githubusercontent.com/reearth/reearth-visualizer/main/server/schemas/internalapi/v1/schema.proto
-          # Update go_package path
-          sed -i 's|option go_package = "proto/v1";|option go_package = "github.com/reearth/reearth-proto/gen/go/visualizer/v1;visualizerv1";|' \
-            visualizer/v1/visualizer.proto.new
+      # Obsolete since reearth-visualizer#2189 - this URL 404s and the job used to
+      # commit the 404 page over visualizer/v1/visualizer.proto. See top of file.
+      # - name: Download Visualizer Proto
+      #   run: |
+      #     curl -o visualizer/v1/visualizer.proto.new \
+      #       https://raw.githubusercontent.com/reearth/reearth-visualizer/main/server/schemas/internalapi/v1/schema.proto
+      #     # Update go_package path
+      #     sed -i 's|option go_package = "proto/v1";|option go_package = "github.com/reearth/reearth-proto/gen/go/visualizer/v1;visualizerv1";|' \
+      #       visualizer/v1/visualizer.proto.new
 
       - name: Check for CMS changes
         id: check_cms
@@ -58,31 +93,26 @@ jobs:
             echo "has_cms_changes=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Check for Visualizer changes
-        id: check_vis
-        run: |
-          if ! cmp -s visualizer/v1/visualizer.proto visualizer/v1/visualizer.proto.new; then
-            mv visualizer/v1/visualizer.proto.new visualizer/v1/visualizer.proto
-            echo "has_vis_changes=true" >> $GITHUB_OUTPUT
-          else
-            rm visualizer/v1/visualizer.proto.new
-            echo "has_vis_changes=false" >> $GITHUB_OUTPUT
-          fi
+      # - name: Check for Visualizer changes
+      #   id: check_vis
+      #   run: |
+      #     if ! cmp -s visualizer/v1/visualizer.proto visualizer/v1/visualizer.proto.new; then
+      #       mv visualizer/v1/visualizer.proto.new visualizer/v1/visualizer.proto
+      #       echo "has_vis_changes=true" >> $GITHUB_OUTPUT
+      #     else
+      #       rm visualizer/v1/visualizer.proto.new
+      #       echo "has_vis_changes=false" >> $GITHUB_OUTPUT
+      #     fi
 
       - name: Commit changes
         id: commit
-        if: steps.check_cms.outputs.has_cms_changes == 'true' || steps.check_vis.outputs.has_vis_changes == 'true'
+        if: steps.check_cms.outputs.has_cms_changes == 'true'
         run: |
           CHANGES=""
           if [ "${{ steps.check_cms.outputs.has_cms_changes }}" == "true" ]; then
             git add cms/v1/cms.proto
             CHANGES="${CHANGES}cms, "
           fi
-          if [ "${{ steps.check_vis.outputs.has_vis_changes }}" == "true" ]; then
-            git add visualizer/v1/visualizer.proto
-            CHANGES="${CHANGES}visualizer, "
-          fi
-
           # Remove trailing comma and space
           CHANGES=${CHANGES%, }
 

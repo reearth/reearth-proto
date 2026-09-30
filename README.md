@@ -63,22 +63,49 @@ make tag-dev
 make tag-prod VERSION=v1.1.0
 ```
 
-## How Proto Files are Synced
+## Where Proto Files Come From
 
-Proto files are automatically synced from the OSS repositories:
-- **Source**: `reearth/reearth-cms` and `reearth/reearth-visualizer` (public GitHub repos)
-- **Frequency**: Every 6 hours via scheduled workflow
-- **Manual sync**: Can be triggered via GitHub Actions UI
-- **Auto-tagging**: When changes are detected, a new dev tag is created automatically
+The two services are set up differently. The scheduled sync workflow is
+currently **disabled** - see the note at the top of
+`.github/workflows/sync-from-oss.yml`.
+
+### Visualizer - this repo is the source of truth
+
+`reearth-visualizer` deleted its own proto in
+[reearth-visualizer#2189](https://github.com/reearth/reearth-visualizer/pull/2189)
+and depends on this module instead. Edit `visualizer/v1/visualizer.proto` here.
+
+### CMS - still owned upstream, mirrored here by hand
+
+`reearth-cms` owns `server/schemas/internalapi/v1/schema.proto` and generates
+its own Go code from it; it does not consume this module. The copy in
+`cms/v1/cms.proto` exists for `reearth-dashboard`, which imports
+`reearth-proto/gen/go/cms/v1`.
+
+That means the dashboard's client stubs and the CMS server's stubs are built
+from two separate copies of the same schema. A mismatch does not break any
+build - it shows up at runtime as empty fields or a missing RPC. When CMS
+changes its proto, update `cms/v1/cms.proto` here to match, run
+`make generate`, and cut a new tag.
+
+> **Open question:** should `reearth-cms` depend on this module the way
+> visualizer does? That would remove the duplicate copy entirely.
 
 ## For Service Maintainers
 
-When updating proto files in CMS or Visualizer:
+**Visualizer schema change:**
 
-1. Make changes in your service's proto file
-2. Test locally: `make grpc && go test ./...`
-3. Push to main branch in CMS or Visualizer
-4. Wait for auto-sync (or trigger manually in reearth-proto GitHub Actions)
+1. Edit `visualizer/v1/visualizer.proto` in this repo
+2. `make generate` and commit `gen/` alongside it
+3. `make breaking` to confirm wire compatibility
+4. Merge, then tag (`make tag-prod VERSION=vX.Y.Z` or the GitHub Actions workflow)
+5. Bump the `reearth-proto` version in the consuming services
+
+**CMS schema change:**
+
+1. Make the change in `reearth-cms` as usual
+2. Copy it into `cms/v1/cms.proto` here, keeping this repo's `go_package` line
+3. Then follow steps 2-5 above
 
 ## Production Releases
 
