@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       bump_type:
-        description: 'Version bump type'
+        description: "Version bump type"
         required: true
         type: choice
         options:
@@ -13,11 +13,11 @@ on:
           - major
           - custom
       custom_version:
-        description: 'Custom version (only if bump_type=custom, e.g., v1.0.0)'
+        description: "Custom version (only if bump_type=custom, e.g., v1.0.0)"
         required: false
         type: string
       release_notes:
-        description: 'Release notes (optional)'
+        description: "Release notes (optional)"
         required: false
         type: string
 
@@ -26,7 +26,6 @@ jobs:
     name: Create Production Tag
     runs-on: ubuntu-latest
     permissions:
-      # GITHUB_TOKEN defaults to read-only, so pushing the tag 403s.
       contents: write
     steps:
       - name: Harden Runner
