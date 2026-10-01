@@ -371,6 +371,8 @@ type Project struct {
 	PublishmentStatus PublishmentStatus `protobuf:"varint,20,opt,name=publishment_status,json=publishmentStatus,proto3,enum=reearth.visualizer.v1.PublishmentStatus" json:"publishment_status,omitempty"`
 	// Scene Publishment value
 	PublishedUrl  *string `protobuf:"bytes,21,opt,name=published_url,json=publishedUrl,proto3,oneof" json:"published_url,omitempty"`
+	CreatedBy     string  `protobuf:"bytes,22,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
+	UpdatedBy     string  `protobuf:"bytes,23,opt,name=updated_by,json=updatedBy,proto3" json:"updated_by,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -548,6 +550,20 @@ func (x *Project) GetPublishmentStatus() PublishmentStatus {
 func (x *Project) GetPublishedUrl() string {
 	if x != nil && x.PublishedUrl != nil {
 		return *x.PublishedUrl
+	}
+	return ""
+}
+
+func (x *Project) GetCreatedBy() string {
+	if x != nil {
+		return x.CreatedBy
+	}
+	return ""
+}
+
+func (x *Project) GetUpdatedBy() string {
+	if x != nil {
+		return x.UpdatedBy
 	}
 	return ""
 }
@@ -3058,7 +3074,7 @@ var File_visualizer_v1_visualizer_proto protoreflect.FileDescriptor
 
 const file_visualizer_v1_visualizer_proto_rawDesc = "" +
 	"\n" +
-	"\x1evisualizer/v1/visualizer.proto\x12\x15reearth.visualizer.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x90\a\n" +
+	"\x1evisualizer/v1/visualizer.proto\x12\x15reearth.visualizer.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xce\a\n" +
 	"\aProject\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12!\n" +
 	"\fworkspace_id\x18\x02 \x01(\tR\vworkspaceId\x12\x19\n" +
@@ -3090,7 +3106,11 @@ const file_visualizer_v1_visualizer_proto_rawDesc = "" +
 	"\rproject_alias\x18\x12 \x01(\tR\fprojectAlias\x12\x14\n" +
 	"\x05alias\x18\x13 \x01(\tR\x05alias\x12W\n" +
 	"\x12publishment_status\x18\x14 \x01(\x0e2(.reearth.visualizer.v1.PublishmentStatusR\x11publishmentStatus\x12(\n" +
-	"\rpublished_url\x18\x15 \x01(\tH\x02R\fpublishedUrl\x88\x01\x01B\f\n" +
+	"\rpublished_url\x18\x15 \x01(\tH\x02R\fpublishedUrl\x88\x01\x01\x12\x1d\n" +
+	"\n" +
+	"created_by\x18\x16 \x01(\tR\tcreatedBy\x12\x1d\n" +
+	"\n" +
+	"updated_by\x18\x17 \x01(\tR\tupdatedByB\f\n" +
 	"\n" +
 	"_image_urlB\v\n" +
 	"\t_metadataB\x10\n" +
