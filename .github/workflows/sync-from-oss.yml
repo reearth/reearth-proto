@@ -1,9 +1,6 @@
 name: Sync Proto from OSS Repos
 
 on:
-  schedule:
-    # Run every 6 hours
-    - cron: '0 */6 * * *'
   workflow_dispatch:
     # Allow manual trigger
 
@@ -33,19 +30,11 @@ jobs:
 
       - name: Download CMS Proto
         run: |
-          curl -o cms/v1/cms.proto.new \
+          curl -fsS -o cms/v1/cms.proto.new \
             https://raw.githubusercontent.com/reearth/reearth-cms/main/server/schemas/internalapi/v1/schema.proto
           # Update go_package path
           sed -i 's|option go_package = "proto/v1";|option go_package = "github.com/reearth/reearth-proto/gen/go/cms/v1;cmsv1";|' \
             cms/v1/cms.proto.new
-
-      - name: Download Visualizer Proto
-        run: |
-          curl -o visualizer/v1/visualizer.proto.new \
-            https://raw.githubusercontent.com/reearth/reearth-visualizer/main/server/schemas/internalapi/v1/schema.proto
-          # Update go_package path
-          sed -i 's|option go_package = "proto/v1";|option go_package = "github.com/reearth/reearth-proto/gen/go/visualizer/v1;visualizerv1";|' \
-            visualizer/v1/visualizer.proto.new
 
       - name: Check for CMS changes
         id: check_cms
@@ -58,31 +47,15 @@ jobs:
             echo "has_cms_changes=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Check for Visualizer changes
-        id: check_vis
-        run: |
-          if ! cmp -s visualizer/v1/visualizer.proto visualizer/v1/visualizer.proto.new; then
-            mv visualizer/v1/visualizer.proto.new visualizer/v1/visualizer.proto
-            echo "has_vis_changes=true" >> $GITHUB_OUTPUT
-          else
-            rm visualizer/v1/visualizer.proto.new
-            echo "has_vis_changes=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Commit changes
         id: commit
-        if: steps.check_cms.outputs.has_cms_changes == 'true' || steps.check_vis.outputs.has_vis_changes == 'true'
+        if: steps.check_cms.outputs.has_cms_changes == 'true'
         run: |
           CHANGES=""
           if [ "${{ steps.check_cms.outputs.has_cms_changes }}" == "true" ]; then
             git add cms/v1/cms.proto
             CHANGES="${CHANGES}cms, "
           fi
-          if [ "${{ steps.check_vis.outputs.has_vis_changes }}" == "true" ]; then
-            git add visualizer/v1/visualizer.proto
-            CHANGES="${CHANGES}visualizer, "
-          fi
-
           # Remove trailing comma and space
           CHANGES=${CHANGES%, }
 
