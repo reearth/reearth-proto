@@ -29,10 +29,8 @@ const (
 	ReEarthFlow_SetProjectStar_FullMethodName     = "/reearth.flow.v1.ReEarthFlow/SetProjectStar"
 	ReEarthFlow_ListDeployments_FullMethodName    = "/reearth.flow.v1.ReEarthFlow/ListDeployments"
 	ReEarthFlow_GetDeployment_FullMethodName      = "/reearth.flow.v1.ReEarthFlow/GetDeployment"
-	ReEarthFlow_DeleteDeployment_FullMethodName   = "/reearth.flow.v1.ReEarthFlow/DeleteDeployment"
 	ReEarthFlow_ListTriggers_FullMethodName       = "/reearth.flow.v1.ReEarthFlow/ListTriggers"
 	ReEarthFlow_GetTrigger_FullMethodName         = "/reearth.flow.v1.ReEarthFlow/GetTrigger"
-	ReEarthFlow_DeleteTrigger_FullMethodName      = "/reearth.flow.v1.ReEarthFlow/DeleteTrigger"
 	ReEarthFlow_ListJobs_FullMethodName           = "/reearth.flow.v1.ReEarthFlow/ListJobs"
 	ReEarthFlow_GetJob_FullMethodName             = "/reearth.flow.v1.ReEarthFlow/GetJob"
 )
@@ -61,8 +59,7 @@ const (
 //     see.
 //   - INVALID_ARGUMENT: a malformed ID, alias or other field.
 //   - ALREADY_EXISTS: the alias is taken in the workspace.
-//   - FAILED_PRECONDITION: a private project on a plan that does not allow it,
-//     or a deployment that triggers still use.
+//   - FAILED_PRECONDITION: a private project on a plan that does not allow it.
 type ReEarthFlowClient interface {
 	// ListProjects lists a workspace's projects. Non-members get only public
 	// projects.
@@ -82,10 +79,8 @@ type ReEarthFlowClient interface {
 	SetProjectStar(ctx context.Context, in *SetProjectStarRequest, opts ...grpc.CallOption) (*SetProjectStarResponse, error)
 	ListDeployments(ctx context.Context, in *ListDeploymentsRequest, opts ...grpc.CallOption) (*ListDeploymentsResponse, error)
 	GetDeployment(ctx context.Context, in *GetDeploymentRequest, opts ...grpc.CallOption) (*GetDeploymentResponse, error)
-	DeleteDeployment(ctx context.Context, in *DeleteDeploymentRequest, opts ...grpc.CallOption) (*DeleteDeploymentResponse, error)
 	ListTriggers(ctx context.Context, in *ListTriggersRequest, opts ...grpc.CallOption) (*ListTriggersResponse, error)
 	GetTrigger(ctx context.Context, in *GetTriggerRequest, opts ...grpc.CallOption) (*GetTriggerResponse, error)
-	DeleteTrigger(ctx context.Context, in *DeleteTriggerRequest, opts ...grpc.CallOption) (*DeleteTriggerResponse, error)
 	// ListJobs lists a workspace's runs, leaving out debug runs from the editor.
 	ListJobs(ctx context.Context, in *ListJobsRequest, opts ...grpc.CallOption) (*ListJobsResponse, error)
 	GetJob(ctx context.Context, in *GetJobRequest, opts ...grpc.CallOption) (*GetJobResponse, error)
@@ -199,16 +194,6 @@ func (c *reEarthFlowClient) GetDeployment(ctx context.Context, in *GetDeployment
 	return out, nil
 }
 
-func (c *reEarthFlowClient) DeleteDeployment(ctx context.Context, in *DeleteDeploymentRequest, opts ...grpc.CallOption) (*DeleteDeploymentResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DeleteDeploymentResponse)
-	err := c.cc.Invoke(ctx, ReEarthFlow_DeleteDeployment_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *reEarthFlowClient) ListTriggers(ctx context.Context, in *ListTriggersRequest, opts ...grpc.CallOption) (*ListTriggersResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListTriggersResponse)
@@ -223,16 +208,6 @@ func (c *reEarthFlowClient) GetTrigger(ctx context.Context, in *GetTriggerReques
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetTriggerResponse)
 	err := c.cc.Invoke(ctx, ReEarthFlow_GetTrigger_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *reEarthFlowClient) DeleteTrigger(ctx context.Context, in *DeleteTriggerRequest, opts ...grpc.CallOption) (*DeleteTriggerResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DeleteTriggerResponse)
-	err := c.cc.Invoke(ctx, ReEarthFlow_DeleteTrigger_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -283,8 +258,7 @@ func (c *reEarthFlowClient) GetJob(ctx context.Context, in *GetJobRequest, opts 
 //     see.
 //   - INVALID_ARGUMENT: a malformed ID, alias or other field.
 //   - ALREADY_EXISTS: the alias is taken in the workspace.
-//   - FAILED_PRECONDITION: a private project on a plan that does not allow it,
-//     or a deployment that triggers still use.
+//   - FAILED_PRECONDITION: a private project on a plan that does not allow it.
 type ReEarthFlowServer interface {
 	// ListProjects lists a workspace's projects. Non-members get only public
 	// projects.
@@ -304,10 +278,8 @@ type ReEarthFlowServer interface {
 	SetProjectStar(context.Context, *SetProjectStarRequest) (*SetProjectStarResponse, error)
 	ListDeployments(context.Context, *ListDeploymentsRequest) (*ListDeploymentsResponse, error)
 	GetDeployment(context.Context, *GetDeploymentRequest) (*GetDeploymentResponse, error)
-	DeleteDeployment(context.Context, *DeleteDeploymentRequest) (*DeleteDeploymentResponse, error)
 	ListTriggers(context.Context, *ListTriggersRequest) (*ListTriggersResponse, error)
 	GetTrigger(context.Context, *GetTriggerRequest) (*GetTriggerResponse, error)
-	DeleteTrigger(context.Context, *DeleteTriggerRequest) (*DeleteTriggerResponse, error)
 	// ListJobs lists a workspace's runs, leaving out debug runs from the editor.
 	ListJobs(context.Context, *ListJobsRequest) (*ListJobsResponse, error)
 	GetJob(context.Context, *GetJobRequest) (*GetJobResponse, error)
@@ -351,17 +323,11 @@ func (UnimplementedReEarthFlowServer) ListDeployments(context.Context, *ListDepl
 func (UnimplementedReEarthFlowServer) GetDeployment(context.Context, *GetDeploymentRequest) (*GetDeploymentResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetDeployment not implemented")
 }
-func (UnimplementedReEarthFlowServer) DeleteDeployment(context.Context, *DeleteDeploymentRequest) (*DeleteDeploymentResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method DeleteDeployment not implemented")
-}
 func (UnimplementedReEarthFlowServer) ListTriggers(context.Context, *ListTriggersRequest) (*ListTriggersResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListTriggers not implemented")
 }
 func (UnimplementedReEarthFlowServer) GetTrigger(context.Context, *GetTriggerRequest) (*GetTriggerResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetTrigger not implemented")
-}
-func (UnimplementedReEarthFlowServer) DeleteTrigger(context.Context, *DeleteTriggerRequest) (*DeleteTriggerResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method DeleteTrigger not implemented")
 }
 func (UnimplementedReEarthFlowServer) ListJobs(context.Context, *ListJobsRequest) (*ListJobsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListJobs not implemented")
@@ -570,24 +536,6 @@ func _ReEarthFlow_GetDeployment_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ReEarthFlow_DeleteDeployment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteDeploymentRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ReEarthFlowServer).DeleteDeployment(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ReEarthFlow_DeleteDeployment_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ReEarthFlowServer).DeleteDeployment(ctx, req.(*DeleteDeploymentRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _ReEarthFlow_ListTriggers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListTriggersRequest)
 	if err := dec(in); err != nil {
@@ -620,24 +568,6 @@ func _ReEarthFlow_GetTrigger_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ReEarthFlowServer).GetTrigger(ctx, req.(*GetTriggerRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ReEarthFlow_DeleteTrigger_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteTriggerRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ReEarthFlowServer).DeleteTrigger(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ReEarthFlow_DeleteTrigger_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ReEarthFlowServer).DeleteTrigger(ctx, req.(*DeleteTriggerRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -726,20 +656,12 @@ var ReEarthFlow_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ReEarthFlow_GetDeployment_Handler,
 		},
 		{
-			MethodName: "DeleteDeployment",
-			Handler:    _ReEarthFlow_DeleteDeployment_Handler,
-		},
-		{
 			MethodName: "ListTriggers",
 			Handler:    _ReEarthFlow_ListTriggers_Handler,
 		},
 		{
 			MethodName: "GetTrigger",
 			Handler:    _ReEarthFlow_GetTrigger_Handler,
-		},
-		{
-			MethodName: "DeleteTrigger",
-			Handler:    _ReEarthFlow_DeleteTrigger_Handler,
 		},
 		{
 			MethodName: "ListJobs",

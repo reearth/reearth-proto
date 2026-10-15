@@ -26,8 +26,7 @@ option go_package = "github.com/reearth/reearth-proto/gen/go/flow/v1;flowv1";
 //   see.
 // - INVALID_ARGUMENT: a malformed ID, alias or other field.
 // - ALREADY_EXISTS: the alias is taken in the workspace.
-// - FAILED_PRECONDITION: a private project on a plan that does not allow it,
-//   or a deployment that triggers still use.
+// - FAILED_PRECONDITION: a private project on a plan that does not allow it.
 service ReEarthFlow {
   // Projects
 
@@ -52,13 +51,11 @@ service ReEarthFlow {
 
   rpc ListDeployments(ListDeploymentsRequest) returns (ListDeploymentsResponse) {}
   rpc GetDeployment(GetDeploymentRequest) returns (GetDeploymentResponse) {}
-  rpc DeleteDeployment(DeleteDeploymentRequest) returns (DeleteDeploymentResponse) {}
 
   // Triggers (workspace members only)
 
   rpc ListTriggers(ListTriggersRequest) returns (ListTriggersResponse) {}
   rpc GetTrigger(GetTriggerRequest) returns (GetTriggerResponse) {}
-  rpc DeleteTrigger(DeleteTriggerRequest) returns (DeleteTriggerResponse) {}
 
   // Jobs (workflow runs; workspace members only)
 
@@ -293,16 +290,6 @@ message GetDeploymentResponse {
   Deployment deployment = 1;
 }
 
-// DeleteDeploymentRequest fails with FAILED_PRECONDITION while triggers still
-// use the deployment.
-message DeleteDeploymentRequest {
-  string deployment_id = 1;
-}
-
-message DeleteDeploymentResponse {
-  string deployment_id = 1;
-}
-
 // Triggers
 
 enum TriggerEventSource {
@@ -352,14 +339,6 @@ message GetTriggerRequest {
 
 message GetTriggerResponse {
   Trigger trigger = 1;
-}
-
-message DeleteTriggerRequest {
-  string trigger_id = 1;
-}
-
-message DeleteTriggerResponse {
-  string trigger_id = 1;
 }
 
 // Jobs
