@@ -6,6 +6,7 @@ Centralized Protocol Buffer definitions for Re:Earth internal APIs.
 
 ```
 cms/v1/          - CMS service proto definitions
+flow/v1/         - Flow service proto definitions
 visualizer/v1/   - Visualizer service proto definitions
 ```
 
@@ -40,6 +41,7 @@ go get github.com/reearth/reearth-proto@v1.0.0
 ```go
 import (
     cmspb "github.com/reearth/reearth-proto/gen/go/cms/v1"
+    flowpb "github.com/reearth/reearth-proto/gen/go/flow/v1"
     vispb "github.com/reearth/reearth-proto/gen/go/visualizer/v1"
 )
 ```
@@ -65,7 +67,7 @@ make tag-prod VERSION=v1.1.0
 
 ## Where Proto Files Come From
 
-The two services are set up differently. The scheduled sync workflow is
+The services are set up differently. The scheduled sync workflow is
 currently **disabled** - see the note at the top of
 `.github/workflows/sync-from-oss.yml`.
 
@@ -74,6 +76,11 @@ currently **disabled** - see the note at the top of
 `reearth-visualizer` deleted its own proto in
 [reearth-visualizer#2189](https://github.com/reearth/reearth-visualizer/pull/2189)
 and depends on this module instead. Edit `visualizer/v1/visualizer.proto` here.
+
+### Flow - this repo is the source of truth
+
+`reearth-flow` has no proto of its own and depends on this module. Edit
+`flow/v1/flow.proto` here.
 
 ### CMS - still owned upstream, mirrored here by hand
 

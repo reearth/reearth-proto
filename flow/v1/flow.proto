@@ -1,0 +1,404 @@
+syntax = "proto3";
+
+package reearth.flow.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/reearth/reearth-proto/gen/go/flow/v1;flowv1";
+
+// ReEarthFlow is Re:Earth Flow's internal API.
+//
+// Every call must carry the internal token as metadata
+// `authorization: Bearer <token>`.
+//
+// A call made for a user also carries `user-id: <reearth-accounts user ID>`.
+// Workspace members get what their role allows. Without a user-id, or for a
+// user outside the workspace, only public projects that are not archived can
+// be read. Writes and starring always need a user-id.
+//
+// Errors use standard gRPC codes:
+// - UNAUTHENTICATED: a missing or wrong token, or a user-id that is required
+//   but missing, malformed or unknown.
+// - NOT_FOUND: the item does not exist or the caller may not see it; the two
+//   are not told apart.
+// - PERMISSION_DENIED: the caller may see the item but not do this to it, or
+//   asked to list a workspace whose deployments, triggers or jobs they may not
+//   see.
+// - INVALID_ARGUMENT: a malformed ID, alias or other field.
+// - ALREADY_EXISTS: the alias is taken in the workspace.
+// - FAILED_PRECONDITION: a private project on a plan that does not allow it,
+//   or a deployment that triggers still use.
+service ReEarthFlow {
+  // Projects
+
+  // ListProjects lists a workspace's projects. Non-members get only public
+  // projects.
+  rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse) {}
+  // ListPublicProjects lists public projects across every workspace.
+  rpc ListPublicProjects(ListPublicProjectsRequest) returns (ListPublicProjectsResponse) {}
+  rpc GetProject(GetProjectRequest) returns (GetProjectResponse) {}
+  // CheckProjectAlias reports whether an alias is free in a workspace. A
+  // malformed alias returns INVALID_ARGUMENT.
+  rpc CheckProjectAlias(CheckProjectAliasRequest) returns (CheckProjectAliasResponse) {}
+  rpc CreateProject(CreateProjectRequest) returns (CreateProjectResponse) {}
+  rpc UpdateProject(UpdateProjectRequest) returns (UpdateProjectResponse) {}
+  rpc DeleteProject(DeleteProjectRequest) returns (DeleteProjectResponse) {}
+  // SetProjectStar stars or unstars a project for the user. It sets the state
+  // rather than toggling it, so a retried call cannot undo itself. Any user may
+  // star a public project.
+  rpc SetProjectStar(SetProjectStarRequest) returns (SetProjectStarResponse) {}
+
+  // Deployments (workspace members only)
+
+  rpc ListDeployments(ListDeploymentsRequest) returns (ListDeploymentsResponse) {}
+  rpc GetDeployment(GetDeploymentRequest) returns (GetDeploymentResponse) {}
+  rpc DeleteDeployment(DeleteDeploymentRequest) returns (DeleteDeploymentResponse) {}
+
+  // Triggers (workspace members only)
+
+  rpc ListTriggers(ListTriggersRequest) returns (ListTriggersResponse) {}
+  rpc GetTrigger(GetTriggerRequest) returns (GetTriggerResponse) {}
+  rpc DeleteTrigger(DeleteTriggerRequest) returns (DeleteTriggerResponse) {}
+
+  // Jobs (workflow runs; workspace members only)
+
+  // ListJobs lists a workspace's runs, leaving out debug runs from the editor.
+  rpc ListJobs(ListJobsRequest) returns (ListJobsResponse) {}
+  rpc GetJob(GetJobRequest) returns (GetJobResponse) {}
+}
+
+// Common
+
+// PageRequest selects a page. page starts at 1 and defaults to 1; page_size
+// defaults to 20 and is capped at 100.
+message PageRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+}
+
+message PageInfo {
+  int64 total_count = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+}
+
+enum SortDirection {
+  SORT_DIRECTION_UNSPECIFIED = 0;
+  SORT_DIRECTION_ASC = 1;
+  SORT_DIRECTION_DESC = 2;
+}
+
+// Projects
+
+enum ProjectVisibility {
+  PROJECT_VISIBILITY_UNSPECIFIED = 0;
+  PROJECT_VISIBILITY_PUBLIC = 1;
+  PROJECT_VISIBILITY_PRIVATE = 2;
+}
+
+message Project {
+  string id = 1;
+  string workspace_id = 2;
+  string name = 3;
+  // Unique within the workspace. A project without a chosen alias has
+  // "p-<id>".
+  string alias = 4;
+  string description = 5;
+  ProjectVisibility visibility = 6;
+  string readme = 7;
+  string license = 8;
+  repeated string topics = 9;
+  int64 star_count = 10;
+  // Whether the user in user-id starred the project.
+  bool starred = 11;
+  bool is_archived = 12;
+  google.protobuf.Timestamp created_at = 13;
+  google.protobuf.Timestamp updated_at = 14;
+}
+
+// ProjectRef names a project by ID or by its alias in a workspace.
+message ProjectRef {
+  oneof ref {
+    string id = 1;
+    ProjectAlias alias = 2;
+  }
+}
+
+message ProjectAlias {
+  string workspace_id = 1;
+  string alias = 2;
+}
+
+// Topics wraps a topic list so an update can tell "leave as is" (unset) from
+// "clear" (set with no values).
+message Topics {
+  repeated string values = 1;
+}
+
+enum ProjectSortField {
+  // Defaults to PROJECT_SORT_FIELD_UPDATED_AT.
+  PROJECT_SORT_FIELD_UNSPECIFIED = 0;
+  PROJECT_SORT_FIELD_UPDATED_AT = 1;
+  PROJECT_SORT_FIELD_NAME = 2;
+  PROJECT_SORT_FIELD_STAR_COUNT = 3;
+}
+
+// ProjectSort defaults to the most recently updated first.
+message ProjectSort {
+  ProjectSortField field = 1;
+  // Defaults to SORT_DIRECTION_DESC.
+  SortDirection direction = 2;
+}
+
+message ListProjectsRequest {
+  string workspace_id = 1;
+  // Matches project names, ignoring case.
+  optional string keyword = 2;
+  // Only projects that have every one of these topics.
+  repeated string topics = 3;
+  // Only projects with this visibility. Non-members always get public only.
+  optional ProjectVisibility visibility = 4;
+  // Members only; non-members never see archived projects.
+  bool include_archived = 5;
+  ProjectSort sort = 6;
+  PageRequest page = 7;
+}
+
+message ListProjectsResponse {
+  repeated Project projects = 1;
+  PageInfo page_info = 2;
+}
+
+message ListPublicProjectsRequest {
+  // Matches project names, ignoring case.
+  optional string keyword = 1;
+  // Only projects that have every one of these topics.
+  repeated string topics = 2;
+  ProjectSort sort = 3;
+  PageRequest page = 4;
+}
+
+message ListPublicProjectsResponse {
+  repeated Project projects = 1;
+  PageInfo page_info = 2;
+}
+
+message GetProjectRequest {
+  ProjectRef project = 1;
+}
+
+message GetProjectResponse {
+  Project project = 1;
+}
+
+message CheckProjectAliasRequest {
+  string workspace_id = 1;
+  string alias = 2;
+  // The project being edited, so its own alias counts as free.
+  optional string project_id = 3;
+}
+
+message CheckProjectAliasResponse {
+  bool available = 1;
+}
+
+message CreateProjectRequest {
+  string workspace_id = 1;
+  string name = 2;
+  optional string description = 3;
+  // 5-32 letters, digits, "-" or "_". The "p-" prefix is reserved. Defaults
+  // to "p-<id>".
+  optional string alias = 4;
+  // Defaults to public. Private needs a plan that allows it.
+  ProjectVisibility visibility = 5;
+  optional string readme = 6;
+  optional string license = 7;
+  // Trimmed, with blanks and repeats dropped. At most 200 of at most 64
+  // characters each.
+  repeated string topics = 8;
+}
+
+message CreateProjectResponse {
+  Project project = 1;
+}
+
+// UpdateProjectRequest changes only the fields that are set. Making a project
+// private needs a plan that allows it; a project that is already private stays
+// private after a downgrade.
+message UpdateProjectRequest {
+  ProjectRef project = 1;
+  optional string name = 2;
+  optional string description = 3;
+  optional string alias = 4;
+  optional ProjectVisibility visibility = 5;
+  optional string readme = 6;
+  optional string license = 7;
+  optional Topics topics = 8;
+  optional bool archived = 9;
+}
+
+message UpdateProjectResponse {
+  Project project = 1;
+}
+
+message DeleteProjectRequest {
+  ProjectRef project = 1;
+}
+
+message DeleteProjectResponse {
+  string project_id = 1;
+}
+
+message SetProjectStarRequest {
+  ProjectRef project = 1;
+  bool starred = 2;
+}
+
+message SetProjectStarResponse {
+  Project project = 1;
+}
+
+// Deployments
+
+message Deployment {
+  string id = 1;
+  string workspace_id = 2;
+  // Unset for a deployment uploaded without a project.
+  optional string project_id = 3;
+  string version = 4;
+  string description = 5;
+  // Whether this is the latest version of its project's deployment.
+  bool is_head = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+}
+
+message ListDeploymentsRequest {
+  string workspace_id = 1;
+  // Matches descriptions, versions or IDs, ignoring case.
+  optional string keyword = 2;
+  PageRequest page = 3;
+}
+
+message ListDeploymentsResponse {
+  repeated Deployment deployments = 1;
+  PageInfo page_info = 2;
+}
+
+message GetDeploymentRequest {
+  string deployment_id = 1;
+}
+
+message GetDeploymentResponse {
+  Deployment deployment = 1;
+}
+
+// DeleteDeploymentRequest fails with FAILED_PRECONDITION while triggers still
+// use the deployment.
+message DeleteDeploymentRequest {
+  string deployment_id = 1;
+}
+
+message DeleteDeploymentResponse {
+  string deployment_id = 1;
+}
+
+// Triggers
+
+enum TriggerEventSource {
+  TRIGGER_EVENT_SOURCE_UNSPECIFIED = 0;
+  TRIGGER_EVENT_SOURCE_TIME_DRIVEN = 1;
+  TRIGGER_EVENT_SOURCE_API_DRIVEN = 2;
+}
+
+enum TriggerTimeInterval {
+  TRIGGER_TIME_INTERVAL_UNSPECIFIED = 0;
+  TRIGGER_TIME_INTERVAL_EVERY_HOUR = 1;
+  TRIGGER_TIME_INTERVAL_EVERY_DAY = 2;
+  TRIGGER_TIME_INTERVAL_EVERY_WEEK = 3;
+  TRIGGER_TIME_INTERVAL_EVERY_MONTH = 4;
+}
+
+// Trigger never includes an API trigger's auth token.
+message Trigger {
+  string id = 1;
+  string workspace_id = 2;
+  string deployment_id = 3;
+  TriggerEventSource event_source = 4;
+  // Set for time-driven triggers only.
+  TriggerTimeInterval time_interval = 5;
+  bool enabled = 6;
+  string description = 7;
+  optional google.protobuf.Timestamp last_triggered_at = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp updated_at = 10;
+}
+
+message ListTriggersRequest {
+  string workspace_id = 1;
+  // Matches descriptions or IDs, ignoring case.
+  optional string keyword = 2;
+  PageRequest page = 3;
+}
+
+message ListTriggersResponse {
+  repeated Trigger triggers = 1;
+  PageInfo page_info = 2;
+}
+
+message GetTriggerRequest {
+  string trigger_id = 1;
+}
+
+message GetTriggerResponse {
+  Trigger trigger = 1;
+}
+
+message DeleteTriggerRequest {
+  string trigger_id = 1;
+}
+
+message DeleteTriggerResponse {
+  string trigger_id = 1;
+}
+
+// Jobs
+
+enum JobStatus {
+  JOB_STATUS_UNSPECIFIED = 0;
+  JOB_STATUS_PENDING = 1;
+  JOB_STATUS_RUNNING = 2;
+  JOB_STATUS_COMPLETED = 3;
+  JOB_STATUS_FAILED = 4;
+  JOB_STATUS_CANCELLED = 5;
+}
+
+message Job {
+  string id = 1;
+  string workspace_id = 2;
+  optional string deployment_id = 3;
+  optional string project_id = 4;
+  JobStatus status = 5;
+  google.protobuf.Timestamp started_at = 6;
+  optional google.protobuf.Timestamp completed_at = 7;
+}
+
+message ListJobsRequest {
+  string workspace_id = 1;
+  // Matches IDs or statuses, ignoring case.
+  optional string keyword = 2;
+  PageRequest page = 3;
+}
+
+message ListJobsResponse {
+  repeated Job jobs = 1;
+  PageInfo page_info = 2;
+}
+
+message GetJobRequest {
+  string job_id = 1;
+}
+
+message GetJobResponse {
+  Job job = 1;
+}
