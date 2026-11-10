@@ -9,6 +9,7 @@ package flowv1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	structpb "google.golang.org/protobuf/types/known/structpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
@@ -179,6 +180,8 @@ const (
 	TriggerEventSource_TRIGGER_EVENT_SOURCE_UNSPECIFIED TriggerEventSource = 0
 	TriggerEventSource_TRIGGER_EVENT_SOURCE_TIME_DRIVEN TriggerEventSource = 1
 	TriggerEventSource_TRIGGER_EVENT_SOURCE_API_DRIVEN  TriggerEventSource = 2
+	// Run by Re:Earth CMS through RunTrigger.
+	TriggerEventSource_TRIGGER_EVENT_SOURCE_CMS TriggerEventSource = 3
 )
 
 // Enum value maps for TriggerEventSource.
@@ -187,11 +190,13 @@ var (
 		0: "TRIGGER_EVENT_SOURCE_UNSPECIFIED",
 		1: "TRIGGER_EVENT_SOURCE_TIME_DRIVEN",
 		2: "TRIGGER_EVENT_SOURCE_API_DRIVEN",
+		3: "TRIGGER_EVENT_SOURCE_CMS",
 	}
 	TriggerEventSource_value = map[string]int32{
 		"TRIGGER_EVENT_SOURCE_UNSPECIFIED": 0,
 		"TRIGGER_EVENT_SOURCE_TIME_DRIVEN": 1,
 		"TRIGGER_EVENT_SOURCE_API_DRIVEN":  2,
+		"TRIGGER_EVENT_SOURCE_CMS":         3,
 	}
 )
 
@@ -277,6 +282,74 @@ func (TriggerTimeInterval) EnumDescriptor() ([]byte, []int) {
 	return file_flow_v1_flow_proto_rawDescGZIP(), []int{4}
 }
 
+type VariableType int32
+
+const (
+	// A type a caller cannot set, such as a geometry.
+	VariableType_VARIABLE_TYPE_UNSPECIFIED VariableType = 0
+	VariableType_VARIABLE_TYPE_TEXT        VariableType = 1
+	VariableType_VARIABLE_TYPE_NUMBER      VariableType = 2
+	VariableType_VARIABLE_TYPE_YES_NO      VariableType = 3
+	VariableType_VARIABLE_TYPE_CHOICE      VariableType = 4
+	VariableType_VARIABLE_TYPE_ARRAY       VariableType = 5
+	VariableType_VARIABLE_TYPE_DATETIME    VariableType = 6
+	VariableType_VARIABLE_TYPE_COLOR       VariableType = 7
+	VariableType_VARIABLE_TYPE_FILE_FOLDER VariableType = 8
+)
+
+// Enum value maps for VariableType.
+var (
+	VariableType_name = map[int32]string{
+		0: "VARIABLE_TYPE_UNSPECIFIED",
+		1: "VARIABLE_TYPE_TEXT",
+		2: "VARIABLE_TYPE_NUMBER",
+		3: "VARIABLE_TYPE_YES_NO",
+		4: "VARIABLE_TYPE_CHOICE",
+		5: "VARIABLE_TYPE_ARRAY",
+		6: "VARIABLE_TYPE_DATETIME",
+		7: "VARIABLE_TYPE_COLOR",
+		8: "VARIABLE_TYPE_FILE_FOLDER",
+	}
+	VariableType_value = map[string]int32{
+		"VARIABLE_TYPE_UNSPECIFIED": 0,
+		"VARIABLE_TYPE_TEXT":        1,
+		"VARIABLE_TYPE_NUMBER":      2,
+		"VARIABLE_TYPE_YES_NO":      3,
+		"VARIABLE_TYPE_CHOICE":      4,
+		"VARIABLE_TYPE_ARRAY":       5,
+		"VARIABLE_TYPE_DATETIME":    6,
+		"VARIABLE_TYPE_COLOR":       7,
+		"VARIABLE_TYPE_FILE_FOLDER": 8,
+	}
+)
+
+func (x VariableType) Enum() *VariableType {
+	p := new(VariableType)
+	*p = x
+	return p
+}
+
+func (x VariableType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (VariableType) Descriptor() protoreflect.EnumDescriptor {
+	return file_flow_v1_flow_proto_enumTypes[5].Descriptor()
+}
+
+func (VariableType) Type() protoreflect.EnumType {
+	return &file_flow_v1_flow_proto_enumTypes[5]
+}
+
+func (x VariableType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use VariableType.Descriptor instead.
+func (VariableType) EnumDescriptor() ([]byte, []int) {
+	return file_flow_v1_flow_proto_rawDescGZIP(), []int{5}
+}
+
 type JobStatus int32
 
 const (
@@ -319,11 +392,11 @@ func (x JobStatus) String() string {
 }
 
 func (JobStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_flow_v1_flow_proto_enumTypes[5].Descriptor()
+	return file_flow_v1_flow_proto_enumTypes[6].Descriptor()
 }
 
 func (JobStatus) Type() protoreflect.EnumType {
-	return &file_flow_v1_flow_proto_enumTypes[5]
+	return &file_flow_v1_flow_proto_enumTypes[6]
 }
 
 func (x JobStatus) Number() protoreflect.EnumNumber {
@@ -332,7 +405,7 @@ func (x JobStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use JobStatus.Descriptor instead.
 func (JobStatus) EnumDescriptor() ([]byte, []int) {
-	return file_flow_v1_flow_proto_rawDescGZIP(), []int{5}
+	return file_flow_v1_flow_proto_rawDescGZIP(), []int{6}
 }
 
 // PageRequest selects a page. page starts at 1 and defaults to 1; page_size
@@ -2103,6 +2176,9 @@ type Trigger struct {
 	LastTriggeredAt *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=last_triggered_at,json=lastTriggeredAt,proto3,oneof" json:"last_triggered_at,omitempty"`
 	CreatedAt       *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	UpdatedAt       *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	Variables       []*TriggerVariable     `protobuf:"bytes,11,rep,name=variables,proto3" json:"variables,omitempty"`
+	Deployment      *Deployment            `protobuf:"bytes,12,opt,name=deployment,proto3" json:"deployment,omitempty"`
+	ProjectName     *string                `protobuf:"bytes,13,opt,name=project_name,json=projectName,proto3,oneof" json:"project_name,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -2207,19 +2283,119 @@ func (x *Trigger) GetUpdatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *Trigger) GetVariables() []*TriggerVariable {
+	if x != nil {
+		return x.Variables
+	}
+	return nil
+}
+
+func (x *Trigger) GetDeployment() *Deployment {
+	if x != nil {
+		return x.Deployment
+	}
+	return nil
+}
+
+func (x *Trigger) GetProjectName() string {
+	if x != nil && x.ProjectName != nil {
+		return *x.ProjectName
+	}
+	return ""
+}
+
+// TriggerVariable is a workflow variable of a trigger's deployment.
+type TriggerVariable struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	Name     string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Type     VariableType           `protobuf:"varint,2,opt,name=type,proto3,enum=reearth.flow.v1.VariableType" json:"type,omitempty"`
+	Required bool                   `protobuf:"varint,3,opt,name=required,proto3" json:"required,omitempty"`
+	// The trigger's own value, else the deployment's default.
+	DefaultValue  *structpb.Value `protobuf:"bytes,4,opt,name=default_value,json=defaultValue,proto3" json:"default_value,omitempty"`
+	Choices       []string        `protobuf:"bytes,5,rep,name=choices,proto3" json:"choices,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TriggerVariable) Reset() {
+	*x = TriggerVariable{}
+	mi := &file_flow_v1_flow_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TriggerVariable) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TriggerVariable) ProtoMessage() {}
+
+func (x *TriggerVariable) ProtoReflect() protoreflect.Message {
+	mi := &file_flow_v1_flow_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TriggerVariable.ProtoReflect.Descriptor instead.
+func (*TriggerVariable) Descriptor() ([]byte, []int) {
+	return file_flow_v1_flow_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *TriggerVariable) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *TriggerVariable) GetType() VariableType {
+	if x != nil {
+		return x.Type
+	}
+	return VariableType_VARIABLE_TYPE_UNSPECIFIED
+}
+
+func (x *TriggerVariable) GetRequired() bool {
+	if x != nil {
+		return x.Required
+	}
+	return false
+}
+
+func (x *TriggerVariable) GetDefaultValue() *structpb.Value {
+	if x != nil {
+		return x.DefaultValue
+	}
+	return nil
+}
+
+func (x *TriggerVariable) GetChoices() []string {
+	if x != nil {
+		return x.Choices
+	}
+	return nil
+}
+
 type ListTriggersRequest struct {
 	state       protoimpl.MessageState `protogen:"open.v1"`
 	WorkspaceId string                 `protobuf:"bytes,1,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
 	// Matches descriptions or IDs, ignoring case.
-	Keyword       *string      `protobuf:"bytes,2,opt,name=keyword,proto3,oneof" json:"keyword,omitempty"`
-	Page          *PageRequest `protobuf:"bytes,3,opt,name=page,proto3" json:"page,omitempty"`
+	Keyword       *string             `protobuf:"bytes,2,opt,name=keyword,proto3,oneof" json:"keyword,omitempty"`
+	Page          *PageRequest        `protobuf:"bytes,3,opt,name=page,proto3" json:"page,omitempty"`
+	EventSource   *TriggerEventSource `protobuf:"varint,4,opt,name=event_source,json=eventSource,proto3,enum=reearth.flow.v1.TriggerEventSource,oneof" json:"event_source,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListTriggersRequest) Reset() {
 	*x = ListTriggersRequest{}
-	mi := &file_flow_v1_flow_proto_msgTypes[29]
+	mi := &file_flow_v1_flow_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2231,7 +2407,7 @@ func (x *ListTriggersRequest) String() string {
 func (*ListTriggersRequest) ProtoMessage() {}
 
 func (x *ListTriggersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_flow_v1_flow_proto_msgTypes[29]
+	mi := &file_flow_v1_flow_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2244,7 +2420,7 @@ func (x *ListTriggersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTriggersRequest.ProtoReflect.Descriptor instead.
 func (*ListTriggersRequest) Descriptor() ([]byte, []int) {
-	return file_flow_v1_flow_proto_rawDescGZIP(), []int{29}
+	return file_flow_v1_flow_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *ListTriggersRequest) GetWorkspaceId() string {
@@ -2268,6 +2444,13 @@ func (x *ListTriggersRequest) GetPage() *PageRequest {
 	return nil
 }
 
+func (x *ListTriggersRequest) GetEventSource() TriggerEventSource {
+	if x != nil && x.EventSource != nil {
+		return *x.EventSource
+	}
+	return TriggerEventSource_TRIGGER_EVENT_SOURCE_UNSPECIFIED
+}
+
 type ListTriggersResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Triggers      []*Trigger             `protobuf:"bytes,1,rep,name=triggers,proto3" json:"triggers,omitempty"`
@@ -2278,7 +2461,7 @@ type ListTriggersResponse struct {
 
 func (x *ListTriggersResponse) Reset() {
 	*x = ListTriggersResponse{}
-	mi := &file_flow_v1_flow_proto_msgTypes[30]
+	mi := &file_flow_v1_flow_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2290,7 +2473,7 @@ func (x *ListTriggersResponse) String() string {
 func (*ListTriggersResponse) ProtoMessage() {}
 
 func (x *ListTriggersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_flow_v1_flow_proto_msgTypes[30]
+	mi := &file_flow_v1_flow_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2303,7 +2486,7 @@ func (x *ListTriggersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTriggersResponse.ProtoReflect.Descriptor instead.
 func (*ListTriggersResponse) Descriptor() ([]byte, []int) {
-	return file_flow_v1_flow_proto_rawDescGZIP(), []int{30}
+	return file_flow_v1_flow_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *ListTriggersResponse) GetTriggers() []*Trigger {
@@ -2329,7 +2512,7 @@ type GetTriggerRequest struct {
 
 func (x *GetTriggerRequest) Reset() {
 	*x = GetTriggerRequest{}
-	mi := &file_flow_v1_flow_proto_msgTypes[31]
+	mi := &file_flow_v1_flow_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2341,7 +2524,7 @@ func (x *GetTriggerRequest) String() string {
 func (*GetTriggerRequest) ProtoMessage() {}
 
 func (x *GetTriggerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_flow_v1_flow_proto_msgTypes[31]
+	mi := &file_flow_v1_flow_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2354,7 +2537,7 @@ func (x *GetTriggerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTriggerRequest.ProtoReflect.Descriptor instead.
 func (*GetTriggerRequest) Descriptor() ([]byte, []int) {
-	return file_flow_v1_flow_proto_rawDescGZIP(), []int{31}
+	return file_flow_v1_flow_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *GetTriggerRequest) GetTriggerId() string {
@@ -2373,7 +2556,7 @@ type GetTriggerResponse struct {
 
 func (x *GetTriggerResponse) Reset() {
 	*x = GetTriggerResponse{}
-	mi := &file_flow_v1_flow_proto_msgTypes[32]
+	mi := &file_flow_v1_flow_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2385,7 +2568,7 @@ func (x *GetTriggerResponse) String() string {
 func (*GetTriggerResponse) ProtoMessage() {}
 
 func (x *GetTriggerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_flow_v1_flow_proto_msgTypes[32]
+	mi := &file_flow_v1_flow_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2398,12 +2581,117 @@ func (x *GetTriggerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTriggerResponse.ProtoReflect.Descriptor instead.
 func (*GetTriggerResponse) Descriptor() ([]byte, []int) {
-	return file_flow_v1_flow_proto_rawDescGZIP(), []int{32}
+	return file_flow_v1_flow_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *GetTriggerResponse) GetTrigger() *Trigger {
 	if x != nil {
 		return x.Trigger
+	}
+	return nil
+}
+
+type RunTriggerRequest struct {
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	TriggerId string                 `protobuf:"bytes,1,opt,name=trigger_id,json=triggerId,proto3" json:"trigger_id,omitempty"`
+	// Values by variable name; omitted variables take their default.
+	Variables     map[string]*structpb.Value `protobuf:"bytes,2,rep,name=variables,proto3" json:"variables,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Origin        *JobOrigin                 `protobuf:"bytes,3,opt,name=origin,proto3" json:"origin,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RunTriggerRequest) Reset() {
+	*x = RunTriggerRequest{}
+	mi := &file_flow_v1_flow_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RunTriggerRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RunTriggerRequest) ProtoMessage() {}
+
+func (x *RunTriggerRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_flow_v1_flow_proto_msgTypes[34]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RunTriggerRequest.ProtoReflect.Descriptor instead.
+func (*RunTriggerRequest) Descriptor() ([]byte, []int) {
+	return file_flow_v1_flow_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *RunTriggerRequest) GetTriggerId() string {
+	if x != nil {
+		return x.TriggerId
+	}
+	return ""
+}
+
+func (x *RunTriggerRequest) GetVariables() map[string]*structpb.Value {
+	if x != nil {
+		return x.Variables
+	}
+	return nil
+}
+
+func (x *RunTriggerRequest) GetOrigin() *JobOrigin {
+	if x != nil {
+		return x.Origin
+	}
+	return nil
+}
+
+type RunTriggerResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Job           *Job                   `protobuf:"bytes,1,opt,name=job,proto3" json:"job,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RunTriggerResponse) Reset() {
+	*x = RunTriggerResponse{}
+	mi := &file_flow_v1_flow_proto_msgTypes[35]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RunTriggerResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RunTriggerResponse) ProtoMessage() {}
+
+func (x *RunTriggerResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_flow_v1_flow_proto_msgTypes[35]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RunTriggerResponse.ProtoReflect.Descriptor instead.
+func (*RunTriggerResponse) Descriptor() ([]byte, []int) {
+	return file_flow_v1_flow_proto_rawDescGZIP(), []int{35}
+}
+
+func (x *RunTriggerResponse) GetJob() *Job {
+	if x != nil {
+		return x.Job
 	}
 	return nil
 }
@@ -2417,13 +2705,16 @@ type Job struct {
 	Status        JobStatus              `protobuf:"varint,5,opt,name=status,proto3,enum=reearth.flow.v1.JobStatus" json:"status,omitempty"`
 	StartedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
 	CompletedAt   *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=completed_at,json=completedAt,proto3,oneof" json:"completed_at,omitempty"`
+	TriggerId     *string                `protobuf:"bytes,8,opt,name=trigger_id,json=triggerId,proto3,oneof" json:"trigger_id,omitempty"`
+	Origin        *JobOrigin             `protobuf:"bytes,9,opt,name=origin,proto3" json:"origin,omitempty"`
+	Outputs       []*JobOutput           `protobuf:"bytes,10,rep,name=outputs,proto3" json:"outputs,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Job) Reset() {
 	*x = Job{}
-	mi := &file_flow_v1_flow_proto_msgTypes[33]
+	mi := &file_flow_v1_flow_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2435,7 +2726,7 @@ func (x *Job) String() string {
 func (*Job) ProtoMessage() {}
 
 func (x *Job) ProtoReflect() protoreflect.Message {
-	mi := &file_flow_v1_flow_proto_msgTypes[33]
+	mi := &file_flow_v1_flow_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2448,7 +2739,7 @@ func (x *Job) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Job.ProtoReflect.Descriptor instead.
 func (*Job) Descriptor() ([]byte, []int) {
-	return file_flow_v1_flow_proto_rawDescGZIP(), []int{33}
+	return file_flow_v1_flow_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *Job) GetId() string {
@@ -2500,6 +2791,240 @@ func (x *Job) GetCompletedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *Job) GetTriggerId() string {
+	if x != nil && x.TriggerId != nil {
+		return *x.TriggerId
+	}
+	return ""
+}
+
+func (x *Job) GetOrigin() *JobOrigin {
+	if x != nil {
+		return x.Origin
+	}
+	return nil
+}
+
+func (x *Job) GetOutputs() []*JobOutput {
+	if x != nil {
+		return x.Outputs
+	}
+	return nil
+}
+
+// JobOrigin is where outside Flow a job was started from.
+type JobOrigin struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Origin:
+	//
+	//	*JobOrigin_CmsItem
+	Origin        isJobOrigin_Origin `protobuf_oneof:"origin"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *JobOrigin) Reset() {
+	*x = JobOrigin{}
+	mi := &file_flow_v1_flow_proto_msgTypes[37]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *JobOrigin) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*JobOrigin) ProtoMessage() {}
+
+func (x *JobOrigin) ProtoReflect() protoreflect.Message {
+	mi := &file_flow_v1_flow_proto_msgTypes[37]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use JobOrigin.ProtoReflect.Descriptor instead.
+func (*JobOrigin) Descriptor() ([]byte, []int) {
+	return file_flow_v1_flow_proto_rawDescGZIP(), []int{37}
+}
+
+func (x *JobOrigin) GetOrigin() isJobOrigin_Origin {
+	if x != nil {
+		return x.Origin
+	}
+	return nil
+}
+
+func (x *JobOrigin) GetCmsItem() *CmsItemOrigin {
+	if x != nil {
+		if x, ok := x.Origin.(*JobOrigin_CmsItem); ok {
+			return x.CmsItem
+		}
+	}
+	return nil
+}
+
+type isJobOrigin_Origin interface {
+	isJobOrigin_Origin()
+}
+
+type JobOrigin_CmsItem struct {
+	CmsItem *CmsItemOrigin `protobuf:"bytes,1,opt,name=cms_item,json=cmsItem,proto3,oneof"`
+}
+
+func (*JobOrigin_CmsItem) isJobOrigin_Origin() {}
+
+// CmsItemOrigin is the CMS item a run was started for; names are a display snapshot.
+type CmsItemOrigin struct {
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	ProjectId string                 `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	ModelId   string                 `protobuf:"bytes,2,opt,name=model_id,json=modelId,proto3" json:"model_id,omitempty"`
+	ItemId    string                 `protobuf:"bytes,3,opt,name=item_id,json=itemId,proto3" json:"item_id,omitempty"`
+	// The CMS Flow connection that started the run.
+	ConnectionId  string `protobuf:"bytes,4,opt,name=connection_id,json=connectionId,proto3" json:"connection_id,omitempty"`
+	ProjectName   string `protobuf:"bytes,5,opt,name=project_name,json=projectName,proto3" json:"project_name,omitempty"`
+	ModelName     string `protobuf:"bytes,6,opt,name=model_name,json=modelName,proto3" json:"model_name,omitempty"`
+	ItemTitle     string `protobuf:"bytes,7,opt,name=item_title,json=itemTitle,proto3" json:"item_title,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CmsItemOrigin) Reset() {
+	*x = CmsItemOrigin{}
+	mi := &file_flow_v1_flow_proto_msgTypes[38]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CmsItemOrigin) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CmsItemOrigin) ProtoMessage() {}
+
+func (x *CmsItemOrigin) ProtoReflect() protoreflect.Message {
+	mi := &file_flow_v1_flow_proto_msgTypes[38]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CmsItemOrigin.ProtoReflect.Descriptor instead.
+func (*CmsItemOrigin) Descriptor() ([]byte, []int) {
+	return file_flow_v1_flow_proto_rawDescGZIP(), []int{38}
+}
+
+func (x *CmsItemOrigin) GetProjectId() string {
+	if x != nil {
+		return x.ProjectId
+	}
+	return ""
+}
+
+func (x *CmsItemOrigin) GetModelId() string {
+	if x != nil {
+		return x.ModelId
+	}
+	return ""
+}
+
+func (x *CmsItemOrigin) GetItemId() string {
+	if x != nil {
+		return x.ItemId
+	}
+	return ""
+}
+
+func (x *CmsItemOrigin) GetConnectionId() string {
+	if x != nil {
+		return x.ConnectionId
+	}
+	return ""
+}
+
+func (x *CmsItemOrigin) GetProjectName() string {
+	if x != nil {
+		return x.ProjectName
+	}
+	return ""
+}
+
+func (x *CmsItemOrigin) GetModelName() string {
+	if x != nil {
+		return x.ModelName
+	}
+	return ""
+}
+
+func (x *CmsItemOrigin) GetItemTitle() string {
+	if x != nil {
+		return x.ItemTitle
+	}
+	return ""
+}
+
+type JobOutput struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Url           string                 `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *JobOutput) Reset() {
+	*x = JobOutput{}
+	mi := &file_flow_v1_flow_proto_msgTypes[39]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *JobOutput) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*JobOutput) ProtoMessage() {}
+
+func (x *JobOutput) ProtoReflect() protoreflect.Message {
+	mi := &file_flow_v1_flow_proto_msgTypes[39]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use JobOutput.ProtoReflect.Descriptor instead.
+func (*JobOutput) Descriptor() ([]byte, []int) {
+	return file_flow_v1_flow_proto_rawDescGZIP(), []int{39}
+}
+
+func (x *JobOutput) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *JobOutput) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
 type ListJobsRequest struct {
 	state       protoimpl.MessageState `protogen:"open.v1"`
 	WorkspaceId string                 `protobuf:"bytes,1,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
@@ -2512,7 +3037,7 @@ type ListJobsRequest struct {
 
 func (x *ListJobsRequest) Reset() {
 	*x = ListJobsRequest{}
-	mi := &file_flow_v1_flow_proto_msgTypes[34]
+	mi := &file_flow_v1_flow_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2524,7 +3049,7 @@ func (x *ListJobsRequest) String() string {
 func (*ListJobsRequest) ProtoMessage() {}
 
 func (x *ListJobsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_flow_v1_flow_proto_msgTypes[34]
+	mi := &file_flow_v1_flow_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2537,7 +3062,7 @@ func (x *ListJobsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListJobsRequest.ProtoReflect.Descriptor instead.
 func (*ListJobsRequest) Descriptor() ([]byte, []int) {
-	return file_flow_v1_flow_proto_rawDescGZIP(), []int{34}
+	return file_flow_v1_flow_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *ListJobsRequest) GetWorkspaceId() string {
@@ -2571,7 +3096,7 @@ type ListJobsResponse struct {
 
 func (x *ListJobsResponse) Reset() {
 	*x = ListJobsResponse{}
-	mi := &file_flow_v1_flow_proto_msgTypes[35]
+	mi := &file_flow_v1_flow_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2583,7 +3108,7 @@ func (x *ListJobsResponse) String() string {
 func (*ListJobsResponse) ProtoMessage() {}
 
 func (x *ListJobsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_flow_v1_flow_proto_msgTypes[35]
+	mi := &file_flow_v1_flow_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2596,7 +3121,7 @@ func (x *ListJobsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListJobsResponse.ProtoReflect.Descriptor instead.
 func (*ListJobsResponse) Descriptor() ([]byte, []int) {
-	return file_flow_v1_flow_proto_rawDescGZIP(), []int{35}
+	return file_flow_v1_flow_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *ListJobsResponse) GetJobs() []*Job {
@@ -2622,7 +3147,7 @@ type GetJobRequest struct {
 
 func (x *GetJobRequest) Reset() {
 	*x = GetJobRequest{}
-	mi := &file_flow_v1_flow_proto_msgTypes[36]
+	mi := &file_flow_v1_flow_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2634,7 +3159,7 @@ func (x *GetJobRequest) String() string {
 func (*GetJobRequest) ProtoMessage() {}
 
 func (x *GetJobRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_flow_v1_flow_proto_msgTypes[36]
+	mi := &file_flow_v1_flow_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2647,7 +3172,7 @@ func (x *GetJobRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetJobRequest.ProtoReflect.Descriptor instead.
 func (*GetJobRequest) Descriptor() ([]byte, []int) {
-	return file_flow_v1_flow_proto_rawDescGZIP(), []int{36}
+	return file_flow_v1_flow_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *GetJobRequest) GetJobId() string {
@@ -2666,7 +3191,7 @@ type GetJobResponse struct {
 
 func (x *GetJobResponse) Reset() {
 	*x = GetJobResponse{}
-	mi := &file_flow_v1_flow_proto_msgTypes[37]
+	mi := &file_flow_v1_flow_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2678,7 +3203,7 @@ func (x *GetJobResponse) String() string {
 func (*GetJobResponse) ProtoMessage() {}
 
 func (x *GetJobResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_flow_v1_flow_proto_msgTypes[37]
+	mi := &file_flow_v1_flow_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2691,10 +3216,186 @@ func (x *GetJobResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetJobResponse.ProtoReflect.Descriptor instead.
 func (*GetJobResponse) Descriptor() ([]byte, []int) {
-	return file_flow_v1_flow_proto_rawDescGZIP(), []int{37}
+	return file_flow_v1_flow_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *GetJobResponse) GetJob() *Job {
+	if x != nil {
+		return x.Job
+	}
+	return nil
+}
+
+type BatchGetJobsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	JobIds        []string               `protobuf:"bytes,1,rep,name=job_ids,json=jobIds,proto3" json:"job_ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BatchGetJobsRequest) Reset() {
+	*x = BatchGetJobsRequest{}
+	mi := &file_flow_v1_flow_proto_msgTypes[44]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BatchGetJobsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BatchGetJobsRequest) ProtoMessage() {}
+
+func (x *BatchGetJobsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_flow_v1_flow_proto_msgTypes[44]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BatchGetJobsRequest.ProtoReflect.Descriptor instead.
+func (*BatchGetJobsRequest) Descriptor() ([]byte, []int) {
+	return file_flow_v1_flow_proto_rawDescGZIP(), []int{44}
+}
+
+func (x *BatchGetJobsRequest) GetJobIds() []string {
+	if x != nil {
+		return x.JobIds
+	}
+	return nil
+}
+
+type BatchGetJobsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Jobs          []*Job                 `protobuf:"bytes,1,rep,name=jobs,proto3" json:"jobs,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BatchGetJobsResponse) Reset() {
+	*x = BatchGetJobsResponse{}
+	mi := &file_flow_v1_flow_proto_msgTypes[45]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BatchGetJobsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BatchGetJobsResponse) ProtoMessage() {}
+
+func (x *BatchGetJobsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_flow_v1_flow_proto_msgTypes[45]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BatchGetJobsResponse.ProtoReflect.Descriptor instead.
+func (*BatchGetJobsResponse) Descriptor() ([]byte, []int) {
+	return file_flow_v1_flow_proto_rawDescGZIP(), []int{45}
+}
+
+func (x *BatchGetJobsResponse) GetJobs() []*Job {
+	if x != nil {
+		return x.Jobs
+	}
+	return nil
+}
+
+type CancelJobRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	JobId         string                 `protobuf:"bytes,1,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CancelJobRequest) Reset() {
+	*x = CancelJobRequest{}
+	mi := &file_flow_v1_flow_proto_msgTypes[46]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CancelJobRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CancelJobRequest) ProtoMessage() {}
+
+func (x *CancelJobRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_flow_v1_flow_proto_msgTypes[46]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CancelJobRequest.ProtoReflect.Descriptor instead.
+func (*CancelJobRequest) Descriptor() ([]byte, []int) {
+	return file_flow_v1_flow_proto_rawDescGZIP(), []int{46}
+}
+
+func (x *CancelJobRequest) GetJobId() string {
+	if x != nil {
+		return x.JobId
+	}
+	return ""
+}
+
+type CancelJobResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Job           *Job                   `protobuf:"bytes,1,opt,name=job,proto3" json:"job,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CancelJobResponse) Reset() {
+	*x = CancelJobResponse{}
+	mi := &file_flow_v1_flow_proto_msgTypes[47]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CancelJobResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CancelJobResponse) ProtoMessage() {}
+
+func (x *CancelJobResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_flow_v1_flow_proto_msgTypes[47]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CancelJobResponse.ProtoReflect.Descriptor instead.
+func (*CancelJobResponse) Descriptor() ([]byte, []int) {
+	return file_flow_v1_flow_proto_rawDescGZIP(), []int{47}
+}
+
+func (x *CancelJobResponse) GetJob() *Job {
 	if x != nil {
 		return x.Job
 	}
@@ -2705,7 +3406,7 @@ var File_flow_v1_flow_proto protoreflect.FileDescriptor
 
 const file_flow_v1_flow_proto_rawDesc = "" +
 	"\n" +
-	"\x12flow/v1/flow.proto\x12\x0freearth.flow.v1\x1a\x1fgoogle/protobuf/timestamp.proto\">\n" +
+	"\x12flow/v1/flow.proto\x12\x0freearth.flow.v1\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\">\n" +
 	"\vPageRequest\x12\x12\n" +
 	"\x04page\x18\x01 \x01(\x05R\x04page\x12\x1b\n" +
 	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\"\\\n" +
@@ -2866,7 +3567,7 @@ const file_flow_v1_flow_proto_rawDesc = "" +
 	"\x15GetDeploymentResponse\x12;\n" +
 	"\n" +
 	"deployment\x18\x01 \x01(\v2\x1b.reearth.flow.v1.DeploymentR\n" +
-	"deployment\"\x89\x04\n" +
+	"deployment\"\xbf\x05\n" +
 	"\aTrigger\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12!\n" +
 	"\fworkspace_id\x18\x02 \x01(\tR\vworkspaceId\x12#\n" +
@@ -2880,14 +3581,28 @@ const file_flow_v1_flow_proto_rawDesc = "" +
 	"created_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
 	"updated_at\x18\n" +
-	" \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAtB\x14\n" +
-	"\x12_last_triggered_at\"\x95\x01\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12>\n" +
+	"\tvariables\x18\v \x03(\v2 .reearth.flow.v1.TriggerVariableR\tvariables\x12;\n" +
+	"\n" +
+	"deployment\x18\f \x01(\v2\x1b.reearth.flow.v1.DeploymentR\n" +
+	"deployment\x12&\n" +
+	"\fproject_name\x18\r \x01(\tH\x01R\vprojectName\x88\x01\x01B\x14\n" +
+	"\x12_last_triggered_atB\x0f\n" +
+	"\r_project_name\"\xcb\x01\n" +
+	"\x0fTriggerVariable\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x121\n" +
+	"\x04type\x18\x02 \x01(\x0e2\x1d.reearth.flow.v1.VariableTypeR\x04type\x12\x1a\n" +
+	"\brequired\x18\x03 \x01(\bR\brequired\x12;\n" +
+	"\rdefault_value\x18\x04 \x01(\v2\x16.google.protobuf.ValueR\fdefaultValue\x12\x18\n" +
+	"\achoices\x18\x05 \x03(\tR\achoices\"\xf3\x01\n" +
 	"\x13ListTriggersRequest\x12!\n" +
 	"\fworkspace_id\x18\x01 \x01(\tR\vworkspaceId\x12\x1d\n" +
 	"\akeyword\x18\x02 \x01(\tH\x00R\akeyword\x88\x01\x01\x120\n" +
-	"\x04page\x18\x03 \x01(\v2\x1c.reearth.flow.v1.PageRequestR\x04pageB\n" +
+	"\x04page\x18\x03 \x01(\v2\x1c.reearth.flow.v1.PageRequestR\x04page\x12K\n" +
+	"\fevent_source\x18\x04 \x01(\x0e2#.reearth.flow.v1.TriggerEventSourceH\x01R\veventSource\x88\x01\x01B\n" +
 	"\n" +
-	"\b_keyword\"\x84\x01\n" +
+	"\b_keywordB\x0f\n" +
+	"\r_event_source\"\x84\x01\n" +
 	"\x14ListTriggersResponse\x124\n" +
 	"\btriggers\x18\x01 \x03(\v2\x18.reearth.flow.v1.TriggerR\btriggers\x126\n" +
 	"\tpage_info\x18\x02 \x01(\v2\x19.reearth.flow.v1.PageInfoR\bpageInfo\"2\n" +
@@ -2895,7 +3610,17 @@ const file_flow_v1_flow_proto_rawDesc = "" +
 	"\n" +
 	"trigger_id\x18\x01 \x01(\tR\ttriggerId\"H\n" +
 	"\x12GetTriggerResponse\x122\n" +
-	"\atrigger\x18\x01 \x01(\v2\x18.reearth.flow.v1.TriggerR\atrigger\"\xeb\x02\n" +
+	"\atrigger\x18\x01 \x01(\v2\x18.reearth.flow.v1.TriggerR\atrigger\"\x8d\x02\n" +
+	"\x11RunTriggerRequest\x12\x1d\n" +
+	"\n" +
+	"trigger_id\x18\x01 \x01(\tR\ttriggerId\x12O\n" +
+	"\tvariables\x18\x02 \x03(\v21.reearth.flow.v1.RunTriggerRequest.VariablesEntryR\tvariables\x122\n" +
+	"\x06origin\x18\x03 \x01(\v2\x1a.reearth.flow.v1.JobOriginR\x06origin\x1aT\n" +
+	"\x0eVariablesEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
+	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x05value:\x028\x01\"<\n" +
+	"\x12RunTriggerResponse\x12&\n" +
+	"\x03job\x18\x01 \x01(\v2\x14.reearth.flow.v1.JobR\x03job\"\x88\x04\n" +
 	"\x03Job\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12!\n" +
 	"\fworkspace_id\x18\x02 \x01(\tR\vworkspaceId\x12(\n" +
@@ -2905,10 +3630,33 @@ const file_flow_v1_flow_proto_rawDesc = "" +
 	"\x06status\x18\x05 \x01(\x0e2\x1a.reearth.flow.v1.JobStatusR\x06status\x129\n" +
 	"\n" +
 	"started_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAt\x12B\n" +
-	"\fcompleted_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampH\x02R\vcompletedAt\x88\x01\x01B\x10\n" +
+	"\fcompleted_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampH\x02R\vcompletedAt\x88\x01\x01\x12\"\n" +
+	"\n" +
+	"trigger_id\x18\b \x01(\tH\x03R\ttriggerId\x88\x01\x01\x122\n" +
+	"\x06origin\x18\t \x01(\v2\x1a.reearth.flow.v1.JobOriginR\x06origin\x124\n" +
+	"\aoutputs\x18\n" +
+	" \x03(\v2\x1a.reearth.flow.v1.JobOutputR\aoutputsB\x10\n" +
 	"\x0e_deployment_idB\r\n" +
 	"\v_project_idB\x0f\n" +
-	"\r_completed_at\"\x91\x01\n" +
+	"\r_completed_atB\r\n" +
+	"\v_trigger_id\"R\n" +
+	"\tJobOrigin\x12;\n" +
+	"\bcms_item\x18\x01 \x01(\v2\x1e.reearth.flow.v1.CmsItemOriginH\x00R\acmsItemB\b\n" +
+	"\x06origin\"\xe8\x01\n" +
+	"\rCmsItemOrigin\x12\x1d\n" +
+	"\n" +
+	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x19\n" +
+	"\bmodel_id\x18\x02 \x01(\tR\amodelId\x12\x17\n" +
+	"\aitem_id\x18\x03 \x01(\tR\x06itemId\x12#\n" +
+	"\rconnection_id\x18\x04 \x01(\tR\fconnectionId\x12!\n" +
+	"\fproject_name\x18\x05 \x01(\tR\vprojectName\x12\x1d\n" +
+	"\n" +
+	"model_name\x18\x06 \x01(\tR\tmodelName\x12\x1d\n" +
+	"\n" +
+	"item_title\x18\a \x01(\tR\titemTitle\"1\n" +
+	"\tJobOutput\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x10\n" +
+	"\x03url\x18\x02 \x01(\tR\x03url\"\x91\x01\n" +
 	"\x0fListJobsRequest\x12!\n" +
 	"\fworkspace_id\x18\x01 \x01(\tR\vworkspaceId\x12\x1d\n" +
 	"\akeyword\x18\x02 \x01(\tH\x00R\akeyword\x88\x01\x01\x120\n" +
@@ -2921,6 +3669,14 @@ const file_flow_v1_flow_proto_rawDesc = "" +
 	"\rGetJobRequest\x12\x15\n" +
 	"\x06job_id\x18\x01 \x01(\tR\x05jobId\"8\n" +
 	"\x0eGetJobResponse\x12&\n" +
+	"\x03job\x18\x01 \x01(\v2\x14.reearth.flow.v1.JobR\x03job\".\n" +
+	"\x13BatchGetJobsRequest\x12\x17\n" +
+	"\ajob_ids\x18\x01 \x03(\tR\x06jobIds\"@\n" +
+	"\x14BatchGetJobsResponse\x12(\n" +
+	"\x04jobs\x18\x01 \x03(\v2\x14.reearth.flow.v1.JobR\x04jobs\")\n" +
+	"\x10CancelJobRequest\x12\x15\n" +
+	"\x06job_id\x18\x01 \x01(\tR\x05jobId\";\n" +
+	"\x11CancelJobResponse\x12&\n" +
 	"\x03job\x18\x01 \x01(\v2\x14.reearth.flow.v1.JobR\x03job*`\n" +
 	"\rSortDirection\x12\x1e\n" +
 	"\x1aSORT_DIRECTION_UNSPECIFIED\x10\x00\x12\x16\n" +
@@ -2934,25 +3690,35 @@ const file_flow_v1_flow_proto_rawDesc = "" +
 	"\x1ePROJECT_SORT_FIELD_UNSPECIFIED\x10\x00\x12!\n" +
 	"\x1dPROJECT_SORT_FIELD_UPDATED_AT\x10\x01\x12\x1b\n" +
 	"\x17PROJECT_SORT_FIELD_NAME\x10\x02\x12!\n" +
-	"\x1dPROJECT_SORT_FIELD_STAR_COUNT\x10\x03*\x85\x01\n" +
+	"\x1dPROJECT_SORT_FIELD_STAR_COUNT\x10\x03*\xa3\x01\n" +
 	"\x12TriggerEventSource\x12$\n" +
 	" TRIGGER_EVENT_SOURCE_UNSPECIFIED\x10\x00\x12$\n" +
 	" TRIGGER_EVENT_SOURCE_TIME_DRIVEN\x10\x01\x12#\n" +
-	"\x1fTRIGGER_EVENT_SOURCE_API_DRIVEN\x10\x02*\xd4\x01\n" +
+	"\x1fTRIGGER_EVENT_SOURCE_API_DRIVEN\x10\x02\x12\x1c\n" +
+	"\x18TRIGGER_EVENT_SOURCE_CMS\x10\x03*\xd4\x01\n" +
 	"\x13TriggerTimeInterval\x12%\n" +
 	"!TRIGGER_TIME_INTERVAL_UNSPECIFIED\x10\x00\x12$\n" +
 	" TRIGGER_TIME_INTERVAL_EVERY_HOUR\x10\x01\x12#\n" +
 	"\x1fTRIGGER_TIME_INTERVAL_EVERY_DAY\x10\x02\x12$\n" +
 	" TRIGGER_TIME_INTERVAL_EVERY_WEEK\x10\x03\x12%\n" +
-	"!TRIGGER_TIME_INTERVAL_EVERY_MONTH\x10\x04*\xa2\x01\n" +
+	"!TRIGGER_TIME_INTERVAL_EVERY_MONTH\x10\x04*\x80\x02\n" +
+	"\fVariableType\x12\x1d\n" +
+	"\x19VARIABLE_TYPE_UNSPECIFIED\x10\x00\x12\x16\n" +
+	"\x12VARIABLE_TYPE_TEXT\x10\x01\x12\x18\n" +
+	"\x14VARIABLE_TYPE_NUMBER\x10\x02\x12\x18\n" +
+	"\x14VARIABLE_TYPE_YES_NO\x10\x03\x12\x18\n" +
+	"\x14VARIABLE_TYPE_CHOICE\x10\x04\x12\x17\n" +
+	"\x13VARIABLE_TYPE_ARRAY\x10\x05\x12\x1a\n" +
+	"\x16VARIABLE_TYPE_DATETIME\x10\x06\x12\x17\n" +
+	"\x13VARIABLE_TYPE_COLOR\x10\a\x12\x1d\n" +
+	"\x19VARIABLE_TYPE_FILE_FOLDER\x10\b*\xa2\x01\n" +
 	"\tJobStatus\x12\x1a\n" +
 	"\x16JOB_STATUS_UNSPECIFIED\x10\x00\x12\x16\n" +
 	"\x12JOB_STATUS_PENDING\x10\x01\x12\x16\n" +
 	"\x12JOB_STATUS_RUNNING\x10\x02\x12\x18\n" +
 	"\x14JOB_STATUS_COMPLETED\x10\x03\x12\x15\n" +
 	"\x11JOB_STATUS_FAILED\x10\x04\x12\x18\n" +
-	"\x14JOB_STATUS_CANCELLED\x10\x052\xd1\n" +
-	"\n" +
+	"\x14JOB_STATUS_CANCELLED\x10\x052\xdf\f\n" +
 	"\vReEarthFlow\x12]\n" +
 	"\fListProjects\x12$.reearth.flow.v1.ListProjectsRequest\x1a%.reearth.flow.v1.ListProjectsResponse\"\x00\x12o\n" +
 	"\x12ListPublicProjects\x12*.reearth.flow.v1.ListPublicProjectsRequest\x1a+.reearth.flow.v1.ListPublicProjectsResponse\"\x00\x12W\n" +
@@ -2967,9 +3733,13 @@ const file_flow_v1_flow_proto_rawDesc = "" +
 	"\rGetDeployment\x12%.reearth.flow.v1.GetDeploymentRequest\x1a&.reearth.flow.v1.GetDeploymentResponse\"\x00\x12]\n" +
 	"\fListTriggers\x12$.reearth.flow.v1.ListTriggersRequest\x1a%.reearth.flow.v1.ListTriggersResponse\"\x00\x12W\n" +
 	"\n" +
-	"GetTrigger\x12\".reearth.flow.v1.GetTriggerRequest\x1a#.reearth.flow.v1.GetTriggerResponse\"\x00\x12Q\n" +
+	"GetTrigger\x12\".reearth.flow.v1.GetTriggerRequest\x1a#.reearth.flow.v1.GetTriggerResponse\"\x00\x12W\n" +
+	"\n" +
+	"RunTrigger\x12\".reearth.flow.v1.RunTriggerRequest\x1a#.reearth.flow.v1.RunTriggerResponse\"\x00\x12Q\n" +
 	"\bListJobs\x12 .reearth.flow.v1.ListJobsRequest\x1a!.reearth.flow.v1.ListJobsResponse\"\x00\x12K\n" +
-	"\x06GetJob\x12\x1e.reearth.flow.v1.GetJobRequest\x1a\x1f.reearth.flow.v1.GetJobResponse\"\x00B8Z6github.com/reearth/reearth-proto/gen/go/flow/v1;flowv1b\x06proto3"
+	"\x06GetJob\x12\x1e.reearth.flow.v1.GetJobRequest\x1a\x1f.reearth.flow.v1.GetJobResponse\"\x00\x12]\n" +
+	"\fBatchGetJobs\x12$.reearth.flow.v1.BatchGetJobsRequest\x1a%.reearth.flow.v1.BatchGetJobsResponse\"\x00\x12T\n" +
+	"\tCancelJob\x12!.reearth.flow.v1.CancelJobRequest\x1a\".reearth.flow.v1.CancelJobResponse\"\x00B8Z6github.com/reearth/reearth-proto/gen/go/flow/v1;flowv1b\x06proto3"
 
 var (
 	file_flow_v1_flow_proto_rawDescOnce sync.Once
@@ -2983,137 +3753,170 @@ func file_flow_v1_flow_proto_rawDescGZIP() []byte {
 	return file_flow_v1_flow_proto_rawDescData
 }
 
-var file_flow_v1_flow_proto_enumTypes = make([]protoimpl.EnumInfo, 6)
-var file_flow_v1_flow_proto_msgTypes = make([]protoimpl.MessageInfo, 38)
+var file_flow_v1_flow_proto_enumTypes = make([]protoimpl.EnumInfo, 7)
+var file_flow_v1_flow_proto_msgTypes = make([]protoimpl.MessageInfo, 49)
 var file_flow_v1_flow_proto_goTypes = []any{
 	(SortDirection)(0),                 // 0: reearth.flow.v1.SortDirection
 	(ProjectVisibility)(0),             // 1: reearth.flow.v1.ProjectVisibility
 	(ProjectSortField)(0),              // 2: reearth.flow.v1.ProjectSortField
 	(TriggerEventSource)(0),            // 3: reearth.flow.v1.TriggerEventSource
 	(TriggerTimeInterval)(0),           // 4: reearth.flow.v1.TriggerTimeInterval
-	(JobStatus)(0),                     // 5: reearth.flow.v1.JobStatus
-	(*PageRequest)(nil),                // 6: reearth.flow.v1.PageRequest
-	(*PageInfo)(nil),                   // 7: reearth.flow.v1.PageInfo
-	(*Project)(nil),                    // 8: reearth.flow.v1.Project
-	(*ProjectRef)(nil),                 // 9: reearth.flow.v1.ProjectRef
-	(*ProjectAlias)(nil),               // 10: reearth.flow.v1.ProjectAlias
-	(*Topics)(nil),                     // 11: reearth.flow.v1.Topics
-	(*ProjectSort)(nil),                // 12: reearth.flow.v1.ProjectSort
-	(*ListProjectsRequest)(nil),        // 13: reearth.flow.v1.ListProjectsRequest
-	(*ListProjectsResponse)(nil),       // 14: reearth.flow.v1.ListProjectsResponse
-	(*ListPublicProjectsRequest)(nil),  // 15: reearth.flow.v1.ListPublicProjectsRequest
-	(*ListPublicProjectsResponse)(nil), // 16: reearth.flow.v1.ListPublicProjectsResponse
-	(*GetProjectRequest)(nil),          // 17: reearth.flow.v1.GetProjectRequest
-	(*GetProjectResponse)(nil),         // 18: reearth.flow.v1.GetProjectResponse
-	(*CheckProjectAliasRequest)(nil),   // 19: reearth.flow.v1.CheckProjectAliasRequest
-	(*CheckProjectAliasResponse)(nil),  // 20: reearth.flow.v1.CheckProjectAliasResponse
-	(*CreateProjectRequest)(nil),       // 21: reearth.flow.v1.CreateProjectRequest
-	(*CreateProjectResponse)(nil),      // 22: reearth.flow.v1.CreateProjectResponse
-	(*UpdateProjectRequest)(nil),       // 23: reearth.flow.v1.UpdateProjectRequest
-	(*UpdateProjectResponse)(nil),      // 24: reearth.flow.v1.UpdateProjectResponse
-	(*DeleteProjectRequest)(nil),       // 25: reearth.flow.v1.DeleteProjectRequest
-	(*DeleteProjectResponse)(nil),      // 26: reearth.flow.v1.DeleteProjectResponse
-	(*SetProjectStarRequest)(nil),      // 27: reearth.flow.v1.SetProjectStarRequest
-	(*SetProjectStarResponse)(nil),     // 28: reearth.flow.v1.SetProjectStarResponse
-	(*Deployment)(nil),                 // 29: reearth.flow.v1.Deployment
-	(*ListDeploymentsRequest)(nil),     // 30: reearth.flow.v1.ListDeploymentsRequest
-	(*ListDeploymentsResponse)(nil),    // 31: reearth.flow.v1.ListDeploymentsResponse
-	(*GetDeploymentRequest)(nil),       // 32: reearth.flow.v1.GetDeploymentRequest
-	(*GetDeploymentResponse)(nil),      // 33: reearth.flow.v1.GetDeploymentResponse
-	(*Trigger)(nil),                    // 34: reearth.flow.v1.Trigger
-	(*ListTriggersRequest)(nil),        // 35: reearth.flow.v1.ListTriggersRequest
-	(*ListTriggersResponse)(nil),       // 36: reearth.flow.v1.ListTriggersResponse
-	(*GetTriggerRequest)(nil),          // 37: reearth.flow.v1.GetTriggerRequest
-	(*GetTriggerResponse)(nil),         // 38: reearth.flow.v1.GetTriggerResponse
-	(*Job)(nil),                        // 39: reearth.flow.v1.Job
-	(*ListJobsRequest)(nil),            // 40: reearth.flow.v1.ListJobsRequest
-	(*ListJobsResponse)(nil),           // 41: reearth.flow.v1.ListJobsResponse
-	(*GetJobRequest)(nil),              // 42: reearth.flow.v1.GetJobRequest
-	(*GetJobResponse)(nil),             // 43: reearth.flow.v1.GetJobResponse
-	(*timestamppb.Timestamp)(nil),      // 44: google.protobuf.Timestamp
+	(VariableType)(0),                  // 5: reearth.flow.v1.VariableType
+	(JobStatus)(0),                     // 6: reearth.flow.v1.JobStatus
+	(*PageRequest)(nil),                // 7: reearth.flow.v1.PageRequest
+	(*PageInfo)(nil),                   // 8: reearth.flow.v1.PageInfo
+	(*Project)(nil),                    // 9: reearth.flow.v1.Project
+	(*ProjectRef)(nil),                 // 10: reearth.flow.v1.ProjectRef
+	(*ProjectAlias)(nil),               // 11: reearth.flow.v1.ProjectAlias
+	(*Topics)(nil),                     // 12: reearth.flow.v1.Topics
+	(*ProjectSort)(nil),                // 13: reearth.flow.v1.ProjectSort
+	(*ListProjectsRequest)(nil),        // 14: reearth.flow.v1.ListProjectsRequest
+	(*ListProjectsResponse)(nil),       // 15: reearth.flow.v1.ListProjectsResponse
+	(*ListPublicProjectsRequest)(nil),  // 16: reearth.flow.v1.ListPublicProjectsRequest
+	(*ListPublicProjectsResponse)(nil), // 17: reearth.flow.v1.ListPublicProjectsResponse
+	(*GetProjectRequest)(nil),          // 18: reearth.flow.v1.GetProjectRequest
+	(*GetProjectResponse)(nil),         // 19: reearth.flow.v1.GetProjectResponse
+	(*CheckProjectAliasRequest)(nil),   // 20: reearth.flow.v1.CheckProjectAliasRequest
+	(*CheckProjectAliasResponse)(nil),  // 21: reearth.flow.v1.CheckProjectAliasResponse
+	(*CreateProjectRequest)(nil),       // 22: reearth.flow.v1.CreateProjectRequest
+	(*CreateProjectResponse)(nil),      // 23: reearth.flow.v1.CreateProjectResponse
+	(*UpdateProjectRequest)(nil),       // 24: reearth.flow.v1.UpdateProjectRequest
+	(*UpdateProjectResponse)(nil),      // 25: reearth.flow.v1.UpdateProjectResponse
+	(*DeleteProjectRequest)(nil),       // 26: reearth.flow.v1.DeleteProjectRequest
+	(*DeleteProjectResponse)(nil),      // 27: reearth.flow.v1.DeleteProjectResponse
+	(*SetProjectStarRequest)(nil),      // 28: reearth.flow.v1.SetProjectStarRequest
+	(*SetProjectStarResponse)(nil),     // 29: reearth.flow.v1.SetProjectStarResponse
+	(*Deployment)(nil),                 // 30: reearth.flow.v1.Deployment
+	(*ListDeploymentsRequest)(nil),     // 31: reearth.flow.v1.ListDeploymentsRequest
+	(*ListDeploymentsResponse)(nil),    // 32: reearth.flow.v1.ListDeploymentsResponse
+	(*GetDeploymentRequest)(nil),       // 33: reearth.flow.v1.GetDeploymentRequest
+	(*GetDeploymentResponse)(nil),      // 34: reearth.flow.v1.GetDeploymentResponse
+	(*Trigger)(nil),                    // 35: reearth.flow.v1.Trigger
+	(*TriggerVariable)(nil),            // 36: reearth.flow.v1.TriggerVariable
+	(*ListTriggersRequest)(nil),        // 37: reearth.flow.v1.ListTriggersRequest
+	(*ListTriggersResponse)(nil),       // 38: reearth.flow.v1.ListTriggersResponse
+	(*GetTriggerRequest)(nil),          // 39: reearth.flow.v1.GetTriggerRequest
+	(*GetTriggerResponse)(nil),         // 40: reearth.flow.v1.GetTriggerResponse
+	(*RunTriggerRequest)(nil),          // 41: reearth.flow.v1.RunTriggerRequest
+	(*RunTriggerResponse)(nil),         // 42: reearth.flow.v1.RunTriggerResponse
+	(*Job)(nil),                        // 43: reearth.flow.v1.Job
+	(*JobOrigin)(nil),                  // 44: reearth.flow.v1.JobOrigin
+	(*CmsItemOrigin)(nil),              // 45: reearth.flow.v1.CmsItemOrigin
+	(*JobOutput)(nil),                  // 46: reearth.flow.v1.JobOutput
+	(*ListJobsRequest)(nil),            // 47: reearth.flow.v1.ListJobsRequest
+	(*ListJobsResponse)(nil),           // 48: reearth.flow.v1.ListJobsResponse
+	(*GetJobRequest)(nil),              // 49: reearth.flow.v1.GetJobRequest
+	(*GetJobResponse)(nil),             // 50: reearth.flow.v1.GetJobResponse
+	(*BatchGetJobsRequest)(nil),        // 51: reearth.flow.v1.BatchGetJobsRequest
+	(*BatchGetJobsResponse)(nil),       // 52: reearth.flow.v1.BatchGetJobsResponse
+	(*CancelJobRequest)(nil),           // 53: reearth.flow.v1.CancelJobRequest
+	(*CancelJobResponse)(nil),          // 54: reearth.flow.v1.CancelJobResponse
+	nil,                                // 55: reearth.flow.v1.RunTriggerRequest.VariablesEntry
+	(*timestamppb.Timestamp)(nil),      // 56: google.protobuf.Timestamp
+	(*structpb.Value)(nil),             // 57: google.protobuf.Value
 }
 var file_flow_v1_flow_proto_depIdxs = []int32{
 	1,  // 0: reearth.flow.v1.Project.visibility:type_name -> reearth.flow.v1.ProjectVisibility
-	44, // 1: reearth.flow.v1.Project.created_at:type_name -> google.protobuf.Timestamp
-	44, // 2: reearth.flow.v1.Project.updated_at:type_name -> google.protobuf.Timestamp
-	10, // 3: reearth.flow.v1.ProjectRef.alias:type_name -> reearth.flow.v1.ProjectAlias
+	56, // 1: reearth.flow.v1.Project.created_at:type_name -> google.protobuf.Timestamp
+	56, // 2: reearth.flow.v1.Project.updated_at:type_name -> google.protobuf.Timestamp
+	11, // 3: reearth.flow.v1.ProjectRef.alias:type_name -> reearth.flow.v1.ProjectAlias
 	2,  // 4: reearth.flow.v1.ProjectSort.field:type_name -> reearth.flow.v1.ProjectSortField
 	0,  // 5: reearth.flow.v1.ProjectSort.direction:type_name -> reearth.flow.v1.SortDirection
 	1,  // 6: reearth.flow.v1.ListProjectsRequest.visibility:type_name -> reearth.flow.v1.ProjectVisibility
-	12, // 7: reearth.flow.v1.ListProjectsRequest.sort:type_name -> reearth.flow.v1.ProjectSort
-	6,  // 8: reearth.flow.v1.ListProjectsRequest.page:type_name -> reearth.flow.v1.PageRequest
-	8,  // 9: reearth.flow.v1.ListProjectsResponse.projects:type_name -> reearth.flow.v1.Project
-	7,  // 10: reearth.flow.v1.ListProjectsResponse.page_info:type_name -> reearth.flow.v1.PageInfo
-	12, // 11: reearth.flow.v1.ListPublicProjectsRequest.sort:type_name -> reearth.flow.v1.ProjectSort
-	6,  // 12: reearth.flow.v1.ListPublicProjectsRequest.page:type_name -> reearth.flow.v1.PageRequest
-	8,  // 13: reearth.flow.v1.ListPublicProjectsResponse.projects:type_name -> reearth.flow.v1.Project
-	7,  // 14: reearth.flow.v1.ListPublicProjectsResponse.page_info:type_name -> reearth.flow.v1.PageInfo
-	9,  // 15: reearth.flow.v1.GetProjectRequest.project:type_name -> reearth.flow.v1.ProjectRef
-	8,  // 16: reearth.flow.v1.GetProjectResponse.project:type_name -> reearth.flow.v1.Project
+	13, // 7: reearth.flow.v1.ListProjectsRequest.sort:type_name -> reearth.flow.v1.ProjectSort
+	7,  // 8: reearth.flow.v1.ListProjectsRequest.page:type_name -> reearth.flow.v1.PageRequest
+	9,  // 9: reearth.flow.v1.ListProjectsResponse.projects:type_name -> reearth.flow.v1.Project
+	8,  // 10: reearth.flow.v1.ListProjectsResponse.page_info:type_name -> reearth.flow.v1.PageInfo
+	13, // 11: reearth.flow.v1.ListPublicProjectsRequest.sort:type_name -> reearth.flow.v1.ProjectSort
+	7,  // 12: reearth.flow.v1.ListPublicProjectsRequest.page:type_name -> reearth.flow.v1.PageRequest
+	9,  // 13: reearth.flow.v1.ListPublicProjectsResponse.projects:type_name -> reearth.flow.v1.Project
+	8,  // 14: reearth.flow.v1.ListPublicProjectsResponse.page_info:type_name -> reearth.flow.v1.PageInfo
+	10, // 15: reearth.flow.v1.GetProjectRequest.project:type_name -> reearth.flow.v1.ProjectRef
+	9,  // 16: reearth.flow.v1.GetProjectResponse.project:type_name -> reearth.flow.v1.Project
 	1,  // 17: reearth.flow.v1.CreateProjectRequest.visibility:type_name -> reearth.flow.v1.ProjectVisibility
-	8,  // 18: reearth.flow.v1.CreateProjectResponse.project:type_name -> reearth.flow.v1.Project
-	9,  // 19: reearth.flow.v1.UpdateProjectRequest.project:type_name -> reearth.flow.v1.ProjectRef
+	9,  // 18: reearth.flow.v1.CreateProjectResponse.project:type_name -> reearth.flow.v1.Project
+	10, // 19: reearth.flow.v1.UpdateProjectRequest.project:type_name -> reearth.flow.v1.ProjectRef
 	1,  // 20: reearth.flow.v1.UpdateProjectRequest.visibility:type_name -> reearth.flow.v1.ProjectVisibility
-	11, // 21: reearth.flow.v1.UpdateProjectRequest.topics:type_name -> reearth.flow.v1.Topics
-	8,  // 22: reearth.flow.v1.UpdateProjectResponse.project:type_name -> reearth.flow.v1.Project
-	9,  // 23: reearth.flow.v1.DeleteProjectRequest.project:type_name -> reearth.flow.v1.ProjectRef
-	9,  // 24: reearth.flow.v1.SetProjectStarRequest.project:type_name -> reearth.flow.v1.ProjectRef
-	8,  // 25: reearth.flow.v1.SetProjectStarResponse.project:type_name -> reearth.flow.v1.Project
-	44, // 26: reearth.flow.v1.Deployment.created_at:type_name -> google.protobuf.Timestamp
-	44, // 27: reearth.flow.v1.Deployment.updated_at:type_name -> google.protobuf.Timestamp
-	6,  // 28: reearth.flow.v1.ListDeploymentsRequest.page:type_name -> reearth.flow.v1.PageRequest
-	29, // 29: reearth.flow.v1.ListDeploymentsResponse.deployments:type_name -> reearth.flow.v1.Deployment
-	7,  // 30: reearth.flow.v1.ListDeploymentsResponse.page_info:type_name -> reearth.flow.v1.PageInfo
-	29, // 31: reearth.flow.v1.GetDeploymentResponse.deployment:type_name -> reearth.flow.v1.Deployment
+	12, // 21: reearth.flow.v1.UpdateProjectRequest.topics:type_name -> reearth.flow.v1.Topics
+	9,  // 22: reearth.flow.v1.UpdateProjectResponse.project:type_name -> reearth.flow.v1.Project
+	10, // 23: reearth.flow.v1.DeleteProjectRequest.project:type_name -> reearth.flow.v1.ProjectRef
+	10, // 24: reearth.flow.v1.SetProjectStarRequest.project:type_name -> reearth.flow.v1.ProjectRef
+	9,  // 25: reearth.flow.v1.SetProjectStarResponse.project:type_name -> reearth.flow.v1.Project
+	56, // 26: reearth.flow.v1.Deployment.created_at:type_name -> google.protobuf.Timestamp
+	56, // 27: reearth.flow.v1.Deployment.updated_at:type_name -> google.protobuf.Timestamp
+	7,  // 28: reearth.flow.v1.ListDeploymentsRequest.page:type_name -> reearth.flow.v1.PageRequest
+	30, // 29: reearth.flow.v1.ListDeploymentsResponse.deployments:type_name -> reearth.flow.v1.Deployment
+	8,  // 30: reearth.flow.v1.ListDeploymentsResponse.page_info:type_name -> reearth.flow.v1.PageInfo
+	30, // 31: reearth.flow.v1.GetDeploymentResponse.deployment:type_name -> reearth.flow.v1.Deployment
 	3,  // 32: reearth.flow.v1.Trigger.event_source:type_name -> reearth.flow.v1.TriggerEventSource
 	4,  // 33: reearth.flow.v1.Trigger.time_interval:type_name -> reearth.flow.v1.TriggerTimeInterval
-	44, // 34: reearth.flow.v1.Trigger.last_triggered_at:type_name -> google.protobuf.Timestamp
-	44, // 35: reearth.flow.v1.Trigger.created_at:type_name -> google.protobuf.Timestamp
-	44, // 36: reearth.flow.v1.Trigger.updated_at:type_name -> google.protobuf.Timestamp
-	6,  // 37: reearth.flow.v1.ListTriggersRequest.page:type_name -> reearth.flow.v1.PageRequest
-	34, // 38: reearth.flow.v1.ListTriggersResponse.triggers:type_name -> reearth.flow.v1.Trigger
-	7,  // 39: reearth.flow.v1.ListTriggersResponse.page_info:type_name -> reearth.flow.v1.PageInfo
-	34, // 40: reearth.flow.v1.GetTriggerResponse.trigger:type_name -> reearth.flow.v1.Trigger
-	5,  // 41: reearth.flow.v1.Job.status:type_name -> reearth.flow.v1.JobStatus
-	44, // 42: reearth.flow.v1.Job.started_at:type_name -> google.protobuf.Timestamp
-	44, // 43: reearth.flow.v1.Job.completed_at:type_name -> google.protobuf.Timestamp
-	6,  // 44: reearth.flow.v1.ListJobsRequest.page:type_name -> reearth.flow.v1.PageRequest
-	39, // 45: reearth.flow.v1.ListJobsResponse.jobs:type_name -> reearth.flow.v1.Job
-	7,  // 46: reearth.flow.v1.ListJobsResponse.page_info:type_name -> reearth.flow.v1.PageInfo
-	39, // 47: reearth.flow.v1.GetJobResponse.job:type_name -> reearth.flow.v1.Job
-	13, // 48: reearth.flow.v1.ReEarthFlow.ListProjects:input_type -> reearth.flow.v1.ListProjectsRequest
-	15, // 49: reearth.flow.v1.ReEarthFlow.ListPublicProjects:input_type -> reearth.flow.v1.ListPublicProjectsRequest
-	17, // 50: reearth.flow.v1.ReEarthFlow.GetProject:input_type -> reearth.flow.v1.GetProjectRequest
-	19, // 51: reearth.flow.v1.ReEarthFlow.CheckProjectAlias:input_type -> reearth.flow.v1.CheckProjectAliasRequest
-	21, // 52: reearth.flow.v1.ReEarthFlow.CreateProject:input_type -> reearth.flow.v1.CreateProjectRequest
-	23, // 53: reearth.flow.v1.ReEarthFlow.UpdateProject:input_type -> reearth.flow.v1.UpdateProjectRequest
-	25, // 54: reearth.flow.v1.ReEarthFlow.DeleteProject:input_type -> reearth.flow.v1.DeleteProjectRequest
-	27, // 55: reearth.flow.v1.ReEarthFlow.SetProjectStar:input_type -> reearth.flow.v1.SetProjectStarRequest
-	30, // 56: reearth.flow.v1.ReEarthFlow.ListDeployments:input_type -> reearth.flow.v1.ListDeploymentsRequest
-	32, // 57: reearth.flow.v1.ReEarthFlow.GetDeployment:input_type -> reearth.flow.v1.GetDeploymentRequest
-	35, // 58: reearth.flow.v1.ReEarthFlow.ListTriggers:input_type -> reearth.flow.v1.ListTriggersRequest
-	37, // 59: reearth.flow.v1.ReEarthFlow.GetTrigger:input_type -> reearth.flow.v1.GetTriggerRequest
-	40, // 60: reearth.flow.v1.ReEarthFlow.ListJobs:input_type -> reearth.flow.v1.ListJobsRequest
-	42, // 61: reearth.flow.v1.ReEarthFlow.GetJob:input_type -> reearth.flow.v1.GetJobRequest
-	14, // 62: reearth.flow.v1.ReEarthFlow.ListProjects:output_type -> reearth.flow.v1.ListProjectsResponse
-	16, // 63: reearth.flow.v1.ReEarthFlow.ListPublicProjects:output_type -> reearth.flow.v1.ListPublicProjectsResponse
-	18, // 64: reearth.flow.v1.ReEarthFlow.GetProject:output_type -> reearth.flow.v1.GetProjectResponse
-	20, // 65: reearth.flow.v1.ReEarthFlow.CheckProjectAlias:output_type -> reearth.flow.v1.CheckProjectAliasResponse
-	22, // 66: reearth.flow.v1.ReEarthFlow.CreateProject:output_type -> reearth.flow.v1.CreateProjectResponse
-	24, // 67: reearth.flow.v1.ReEarthFlow.UpdateProject:output_type -> reearth.flow.v1.UpdateProjectResponse
-	26, // 68: reearth.flow.v1.ReEarthFlow.DeleteProject:output_type -> reearth.flow.v1.DeleteProjectResponse
-	28, // 69: reearth.flow.v1.ReEarthFlow.SetProjectStar:output_type -> reearth.flow.v1.SetProjectStarResponse
-	31, // 70: reearth.flow.v1.ReEarthFlow.ListDeployments:output_type -> reearth.flow.v1.ListDeploymentsResponse
-	33, // 71: reearth.flow.v1.ReEarthFlow.GetDeployment:output_type -> reearth.flow.v1.GetDeploymentResponse
-	36, // 72: reearth.flow.v1.ReEarthFlow.ListTriggers:output_type -> reearth.flow.v1.ListTriggersResponse
-	38, // 73: reearth.flow.v1.ReEarthFlow.GetTrigger:output_type -> reearth.flow.v1.GetTriggerResponse
-	41, // 74: reearth.flow.v1.ReEarthFlow.ListJobs:output_type -> reearth.flow.v1.ListJobsResponse
-	43, // 75: reearth.flow.v1.ReEarthFlow.GetJob:output_type -> reearth.flow.v1.GetJobResponse
-	62, // [62:76] is the sub-list for method output_type
-	48, // [48:62] is the sub-list for method input_type
-	48, // [48:48] is the sub-list for extension type_name
-	48, // [48:48] is the sub-list for extension extendee
-	0,  // [0:48] is the sub-list for field type_name
+	56, // 34: reearth.flow.v1.Trigger.last_triggered_at:type_name -> google.protobuf.Timestamp
+	56, // 35: reearth.flow.v1.Trigger.created_at:type_name -> google.protobuf.Timestamp
+	56, // 36: reearth.flow.v1.Trigger.updated_at:type_name -> google.protobuf.Timestamp
+	36, // 37: reearth.flow.v1.Trigger.variables:type_name -> reearth.flow.v1.TriggerVariable
+	30, // 38: reearth.flow.v1.Trigger.deployment:type_name -> reearth.flow.v1.Deployment
+	5,  // 39: reearth.flow.v1.TriggerVariable.type:type_name -> reearth.flow.v1.VariableType
+	57, // 40: reearth.flow.v1.TriggerVariable.default_value:type_name -> google.protobuf.Value
+	7,  // 41: reearth.flow.v1.ListTriggersRequest.page:type_name -> reearth.flow.v1.PageRequest
+	3,  // 42: reearth.flow.v1.ListTriggersRequest.event_source:type_name -> reearth.flow.v1.TriggerEventSource
+	35, // 43: reearth.flow.v1.ListTriggersResponse.triggers:type_name -> reearth.flow.v1.Trigger
+	8,  // 44: reearth.flow.v1.ListTriggersResponse.page_info:type_name -> reearth.flow.v1.PageInfo
+	35, // 45: reearth.flow.v1.GetTriggerResponse.trigger:type_name -> reearth.flow.v1.Trigger
+	55, // 46: reearth.flow.v1.RunTriggerRequest.variables:type_name -> reearth.flow.v1.RunTriggerRequest.VariablesEntry
+	44, // 47: reearth.flow.v1.RunTriggerRequest.origin:type_name -> reearth.flow.v1.JobOrigin
+	43, // 48: reearth.flow.v1.RunTriggerResponse.job:type_name -> reearth.flow.v1.Job
+	6,  // 49: reearth.flow.v1.Job.status:type_name -> reearth.flow.v1.JobStatus
+	56, // 50: reearth.flow.v1.Job.started_at:type_name -> google.protobuf.Timestamp
+	56, // 51: reearth.flow.v1.Job.completed_at:type_name -> google.protobuf.Timestamp
+	44, // 52: reearth.flow.v1.Job.origin:type_name -> reearth.flow.v1.JobOrigin
+	46, // 53: reearth.flow.v1.Job.outputs:type_name -> reearth.flow.v1.JobOutput
+	45, // 54: reearth.flow.v1.JobOrigin.cms_item:type_name -> reearth.flow.v1.CmsItemOrigin
+	7,  // 55: reearth.flow.v1.ListJobsRequest.page:type_name -> reearth.flow.v1.PageRequest
+	43, // 56: reearth.flow.v1.ListJobsResponse.jobs:type_name -> reearth.flow.v1.Job
+	8,  // 57: reearth.flow.v1.ListJobsResponse.page_info:type_name -> reearth.flow.v1.PageInfo
+	43, // 58: reearth.flow.v1.GetJobResponse.job:type_name -> reearth.flow.v1.Job
+	43, // 59: reearth.flow.v1.BatchGetJobsResponse.jobs:type_name -> reearth.flow.v1.Job
+	43, // 60: reearth.flow.v1.CancelJobResponse.job:type_name -> reearth.flow.v1.Job
+	57, // 61: reearth.flow.v1.RunTriggerRequest.VariablesEntry.value:type_name -> google.protobuf.Value
+	14, // 62: reearth.flow.v1.ReEarthFlow.ListProjects:input_type -> reearth.flow.v1.ListProjectsRequest
+	16, // 63: reearth.flow.v1.ReEarthFlow.ListPublicProjects:input_type -> reearth.flow.v1.ListPublicProjectsRequest
+	18, // 64: reearth.flow.v1.ReEarthFlow.GetProject:input_type -> reearth.flow.v1.GetProjectRequest
+	20, // 65: reearth.flow.v1.ReEarthFlow.CheckProjectAlias:input_type -> reearth.flow.v1.CheckProjectAliasRequest
+	22, // 66: reearth.flow.v1.ReEarthFlow.CreateProject:input_type -> reearth.flow.v1.CreateProjectRequest
+	24, // 67: reearth.flow.v1.ReEarthFlow.UpdateProject:input_type -> reearth.flow.v1.UpdateProjectRequest
+	26, // 68: reearth.flow.v1.ReEarthFlow.DeleteProject:input_type -> reearth.flow.v1.DeleteProjectRequest
+	28, // 69: reearth.flow.v1.ReEarthFlow.SetProjectStar:input_type -> reearth.flow.v1.SetProjectStarRequest
+	31, // 70: reearth.flow.v1.ReEarthFlow.ListDeployments:input_type -> reearth.flow.v1.ListDeploymentsRequest
+	33, // 71: reearth.flow.v1.ReEarthFlow.GetDeployment:input_type -> reearth.flow.v1.GetDeploymentRequest
+	37, // 72: reearth.flow.v1.ReEarthFlow.ListTriggers:input_type -> reearth.flow.v1.ListTriggersRequest
+	39, // 73: reearth.flow.v1.ReEarthFlow.GetTrigger:input_type -> reearth.flow.v1.GetTriggerRequest
+	41, // 74: reearth.flow.v1.ReEarthFlow.RunTrigger:input_type -> reearth.flow.v1.RunTriggerRequest
+	47, // 75: reearth.flow.v1.ReEarthFlow.ListJobs:input_type -> reearth.flow.v1.ListJobsRequest
+	49, // 76: reearth.flow.v1.ReEarthFlow.GetJob:input_type -> reearth.flow.v1.GetJobRequest
+	51, // 77: reearth.flow.v1.ReEarthFlow.BatchGetJobs:input_type -> reearth.flow.v1.BatchGetJobsRequest
+	53, // 78: reearth.flow.v1.ReEarthFlow.CancelJob:input_type -> reearth.flow.v1.CancelJobRequest
+	15, // 79: reearth.flow.v1.ReEarthFlow.ListProjects:output_type -> reearth.flow.v1.ListProjectsResponse
+	17, // 80: reearth.flow.v1.ReEarthFlow.ListPublicProjects:output_type -> reearth.flow.v1.ListPublicProjectsResponse
+	19, // 81: reearth.flow.v1.ReEarthFlow.GetProject:output_type -> reearth.flow.v1.GetProjectResponse
+	21, // 82: reearth.flow.v1.ReEarthFlow.CheckProjectAlias:output_type -> reearth.flow.v1.CheckProjectAliasResponse
+	23, // 83: reearth.flow.v1.ReEarthFlow.CreateProject:output_type -> reearth.flow.v1.CreateProjectResponse
+	25, // 84: reearth.flow.v1.ReEarthFlow.UpdateProject:output_type -> reearth.flow.v1.UpdateProjectResponse
+	27, // 85: reearth.flow.v1.ReEarthFlow.DeleteProject:output_type -> reearth.flow.v1.DeleteProjectResponse
+	29, // 86: reearth.flow.v1.ReEarthFlow.SetProjectStar:output_type -> reearth.flow.v1.SetProjectStarResponse
+	32, // 87: reearth.flow.v1.ReEarthFlow.ListDeployments:output_type -> reearth.flow.v1.ListDeploymentsResponse
+	34, // 88: reearth.flow.v1.ReEarthFlow.GetDeployment:output_type -> reearth.flow.v1.GetDeploymentResponse
+	38, // 89: reearth.flow.v1.ReEarthFlow.ListTriggers:output_type -> reearth.flow.v1.ListTriggersResponse
+	40, // 90: reearth.flow.v1.ReEarthFlow.GetTrigger:output_type -> reearth.flow.v1.GetTriggerResponse
+	42, // 91: reearth.flow.v1.ReEarthFlow.RunTrigger:output_type -> reearth.flow.v1.RunTriggerResponse
+	48, // 92: reearth.flow.v1.ReEarthFlow.ListJobs:output_type -> reearth.flow.v1.ListJobsResponse
+	50, // 93: reearth.flow.v1.ReEarthFlow.GetJob:output_type -> reearth.flow.v1.GetJobResponse
+	52, // 94: reearth.flow.v1.ReEarthFlow.BatchGetJobs:output_type -> reearth.flow.v1.BatchGetJobsResponse
+	54, // 95: reearth.flow.v1.ReEarthFlow.CancelJob:output_type -> reearth.flow.v1.CancelJobResponse
+	79, // [79:96] is the sub-list for method output_type
+	62, // [62:79] is the sub-list for method input_type
+	62, // [62:62] is the sub-list for extension type_name
+	62, // [62:62] is the sub-list for extension extendee
+	0,  // [0:62] is the sub-list for field type_name
 }
 
 func init() { file_flow_v1_flow_proto_init() }
@@ -3133,16 +3936,19 @@ func file_flow_v1_flow_proto_init() {
 	file_flow_v1_flow_proto_msgTypes[23].OneofWrappers = []any{}
 	file_flow_v1_flow_proto_msgTypes[24].OneofWrappers = []any{}
 	file_flow_v1_flow_proto_msgTypes[28].OneofWrappers = []any{}
-	file_flow_v1_flow_proto_msgTypes[29].OneofWrappers = []any{}
-	file_flow_v1_flow_proto_msgTypes[33].OneofWrappers = []any{}
-	file_flow_v1_flow_proto_msgTypes[34].OneofWrappers = []any{}
+	file_flow_v1_flow_proto_msgTypes[30].OneofWrappers = []any{}
+	file_flow_v1_flow_proto_msgTypes[36].OneofWrappers = []any{}
+	file_flow_v1_flow_proto_msgTypes[37].OneofWrappers = []any{
+		(*JobOrigin_CmsItem)(nil),
+	}
+	file_flow_v1_flow_proto_msgTypes[40].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_flow_v1_flow_proto_rawDesc), len(file_flow_v1_flow_proto_rawDesc)),
-			NumEnums:      6,
-			NumMessages:   38,
+			NumEnums:      7,
+			NumMessages:   49,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
