@@ -31,8 +31,11 @@ const (
 	ReEarthFlow_GetDeployment_FullMethodName      = "/reearth.flow.v1.ReEarthFlow/GetDeployment"
 	ReEarthFlow_ListTriggers_FullMethodName       = "/reearth.flow.v1.ReEarthFlow/ListTriggers"
 	ReEarthFlow_GetTrigger_FullMethodName         = "/reearth.flow.v1.ReEarthFlow/GetTrigger"
+	ReEarthFlow_RunTrigger_FullMethodName         = "/reearth.flow.v1.ReEarthFlow/RunTrigger"
 	ReEarthFlow_ListJobs_FullMethodName           = "/reearth.flow.v1.ReEarthFlow/ListJobs"
 	ReEarthFlow_GetJob_FullMethodName             = "/reearth.flow.v1.ReEarthFlow/GetJob"
+	ReEarthFlow_BatchGetJobs_FullMethodName       = "/reearth.flow.v1.ReEarthFlow/BatchGetJobs"
+	ReEarthFlow_CancelJob_FullMethodName          = "/reearth.flow.v1.ReEarthFlow/CancelJob"
 )
 
 // ReEarthFlowClient is the client API for ReEarthFlow service.
@@ -60,6 +63,8 @@ const (
 //   - INVALID_ARGUMENT: a malformed ID, alias or other field.
 //   - ALREADY_EXISTS: the alias is taken in the workspace.
 //   - FAILED_PRECONDITION: a private project on a plan that does not allow it.
+//     Also a disabled or non-CMS trigger run, or cancelling a finished job.
+//   - RESOURCE_EXHAUSTED: the workspace is at its plan's running job limit.
 type ReEarthFlowClient interface {
 	// ListProjects lists a workspace's projects. Non-members get only public
 	// projects.
@@ -81,9 +86,15 @@ type ReEarthFlowClient interface {
 	GetDeployment(ctx context.Context, in *GetDeploymentRequest, opts ...grpc.CallOption) (*GetDeploymentResponse, error)
 	ListTriggers(ctx context.Context, in *ListTriggersRequest, opts ...grpc.CallOption) (*ListTriggersResponse, error)
 	GetTrigger(ctx context.Context, in *GetTriggerRequest, opts ...grpc.CallOption) (*GetTriggerResponse, error)
+	// RunTrigger starts a run of a CMS trigger for the user in user-id.
+	RunTrigger(ctx context.Context, in *RunTriggerRequest, opts ...grpc.CallOption) (*RunTriggerResponse, error)
 	// ListJobs lists a workspace's runs, leaving out debug runs from the editor.
 	ListJobs(ctx context.Context, in *ListJobsRequest, opts ...grpc.CallOption) (*ListJobsResponse, error)
 	GetJob(ctx context.Context, in *GetJobRequest, opts ...grpc.CallOption) (*GetJobResponse, error)
+	// BatchGetJobs returns the visible jobs with these IDs, at most 100.
+	BatchGetJobs(ctx context.Context, in *BatchGetJobsRequest, opts ...grpc.CallOption) (*BatchGetJobsResponse, error)
+	// CancelJob cancels a pending or running job.
+	CancelJob(ctx context.Context, in *CancelJobRequest, opts ...grpc.CallOption) (*CancelJobResponse, error)
 }
 
 type reEarthFlowClient struct {
@@ -214,6 +225,16 @@ func (c *reEarthFlowClient) GetTrigger(ctx context.Context, in *GetTriggerReques
 	return out, nil
 }
 
+func (c *reEarthFlowClient) RunTrigger(ctx context.Context, in *RunTriggerRequest, opts ...grpc.CallOption) (*RunTriggerResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RunTriggerResponse)
+	err := c.cc.Invoke(ctx, ReEarthFlow_RunTrigger_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *reEarthFlowClient) ListJobs(ctx context.Context, in *ListJobsRequest, opts ...grpc.CallOption) (*ListJobsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListJobsResponse)
@@ -228,6 +249,26 @@ func (c *reEarthFlowClient) GetJob(ctx context.Context, in *GetJobRequest, opts 
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetJobResponse)
 	err := c.cc.Invoke(ctx, ReEarthFlow_GetJob_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *reEarthFlowClient) BatchGetJobs(ctx context.Context, in *BatchGetJobsRequest, opts ...grpc.CallOption) (*BatchGetJobsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(BatchGetJobsResponse)
+	err := c.cc.Invoke(ctx, ReEarthFlow_BatchGetJobs_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *reEarthFlowClient) CancelJob(ctx context.Context, in *CancelJobRequest, opts ...grpc.CallOption) (*CancelJobResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CancelJobResponse)
+	err := c.cc.Invoke(ctx, ReEarthFlow_CancelJob_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -259,6 +300,8 @@ func (c *reEarthFlowClient) GetJob(ctx context.Context, in *GetJobRequest, opts 
 //   - INVALID_ARGUMENT: a malformed ID, alias or other field.
 //   - ALREADY_EXISTS: the alias is taken in the workspace.
 //   - FAILED_PRECONDITION: a private project on a plan that does not allow it.
+//     Also a disabled or non-CMS trigger run, or cancelling a finished job.
+//   - RESOURCE_EXHAUSTED: the workspace is at its plan's running job limit.
 type ReEarthFlowServer interface {
 	// ListProjects lists a workspace's projects. Non-members get only public
 	// projects.
@@ -280,9 +323,15 @@ type ReEarthFlowServer interface {
 	GetDeployment(context.Context, *GetDeploymentRequest) (*GetDeploymentResponse, error)
 	ListTriggers(context.Context, *ListTriggersRequest) (*ListTriggersResponse, error)
 	GetTrigger(context.Context, *GetTriggerRequest) (*GetTriggerResponse, error)
+	// RunTrigger starts a run of a CMS trigger for the user in user-id.
+	RunTrigger(context.Context, *RunTriggerRequest) (*RunTriggerResponse, error)
 	// ListJobs lists a workspace's runs, leaving out debug runs from the editor.
 	ListJobs(context.Context, *ListJobsRequest) (*ListJobsResponse, error)
 	GetJob(context.Context, *GetJobRequest) (*GetJobResponse, error)
+	// BatchGetJobs returns the visible jobs with these IDs, at most 100.
+	BatchGetJobs(context.Context, *BatchGetJobsRequest) (*BatchGetJobsResponse, error)
+	// CancelJob cancels a pending or running job.
+	CancelJob(context.Context, *CancelJobRequest) (*CancelJobResponse, error)
 	mustEmbedUnimplementedReEarthFlowServer()
 }
 
@@ -329,11 +378,20 @@ func (UnimplementedReEarthFlowServer) ListTriggers(context.Context, *ListTrigger
 func (UnimplementedReEarthFlowServer) GetTrigger(context.Context, *GetTriggerRequest) (*GetTriggerResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetTrigger not implemented")
 }
+func (UnimplementedReEarthFlowServer) RunTrigger(context.Context, *RunTriggerRequest) (*RunTriggerResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RunTrigger not implemented")
+}
 func (UnimplementedReEarthFlowServer) ListJobs(context.Context, *ListJobsRequest) (*ListJobsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListJobs not implemented")
 }
 func (UnimplementedReEarthFlowServer) GetJob(context.Context, *GetJobRequest) (*GetJobResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetJob not implemented")
+}
+func (UnimplementedReEarthFlowServer) BatchGetJobs(context.Context, *BatchGetJobsRequest) (*BatchGetJobsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method BatchGetJobs not implemented")
+}
+func (UnimplementedReEarthFlowServer) CancelJob(context.Context, *CancelJobRequest) (*CancelJobResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CancelJob not implemented")
 }
 func (UnimplementedReEarthFlowServer) mustEmbedUnimplementedReEarthFlowServer() {}
 func (UnimplementedReEarthFlowServer) testEmbeddedByValue()                     {}
@@ -572,6 +630,24 @@ func _ReEarthFlow_GetTrigger_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ReEarthFlow_RunTrigger_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RunTriggerRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ReEarthFlowServer).RunTrigger(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ReEarthFlow_RunTrigger_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ReEarthFlowServer).RunTrigger(ctx, req.(*RunTriggerRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ReEarthFlow_ListJobs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListJobsRequest)
 	if err := dec(in); err != nil {
@@ -604,6 +680,42 @@ func _ReEarthFlow_GetJob_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ReEarthFlowServer).GetJob(ctx, req.(*GetJobRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ReEarthFlow_BatchGetJobs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BatchGetJobsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ReEarthFlowServer).BatchGetJobs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ReEarthFlow_BatchGetJobs_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ReEarthFlowServer).BatchGetJobs(ctx, req.(*BatchGetJobsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ReEarthFlow_CancelJob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CancelJobRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ReEarthFlowServer).CancelJob(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ReEarthFlow_CancelJob_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ReEarthFlowServer).CancelJob(ctx, req.(*CancelJobRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -664,12 +776,24 @@ var ReEarthFlow_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ReEarthFlow_GetTrigger_Handler,
 		},
 		{
+			MethodName: "RunTrigger",
+			Handler:    _ReEarthFlow_RunTrigger_Handler,
+		},
+		{
 			MethodName: "ListJobs",
 			Handler:    _ReEarthFlow_ListJobs_Handler,
 		},
 		{
 			MethodName: "GetJob",
 			Handler:    _ReEarthFlow_GetJob_Handler,
+		},
+		{
+			MethodName: "BatchGetJobs",
+			Handler:    _ReEarthFlow_BatchGetJobs_Handler,
+		},
+		{
+			MethodName: "CancelJob",
+			Handler:    _ReEarthFlow_CancelJob_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

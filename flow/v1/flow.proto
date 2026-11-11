@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package reearth.flow.v1;
 
+import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/reearth/reearth-proto/gen/go/flow/v1;flowv1";
@@ -27,6 +28,8 @@ option go_package = "github.com/reearth/reearth-proto/gen/go/flow/v1;flowv1";
 // - INVALID_ARGUMENT: a malformed ID, alias or other field.
 // - ALREADY_EXISTS: the alias is taken in the workspace.
 // - FAILED_PRECONDITION: a private project on a plan that does not allow it.
+//   Also a disabled or non-CMS trigger run, or cancelling a finished job.
+// - RESOURCE_EXHAUSTED: the workspace is at its plan's running job limit.
 service ReEarthFlow {
   // Projects
 
@@ -56,12 +59,18 @@ service ReEarthFlow {
 
   rpc ListTriggers(ListTriggersRequest) returns (ListTriggersResponse) {}
   rpc GetTrigger(GetTriggerRequest) returns (GetTriggerResponse) {}
+  // RunTrigger starts a run of a CMS trigger for the user in user-id.
+  rpc RunTrigger(RunTriggerRequest) returns (RunTriggerResponse) {}
 
   // Jobs (workflow runs; workspace members only)
 
   // ListJobs lists a workspace's runs, leaving out debug runs from the editor.
   rpc ListJobs(ListJobsRequest) returns (ListJobsResponse) {}
   rpc GetJob(GetJobRequest) returns (GetJobResponse) {}
+  // BatchGetJobs returns the visible jobs with these IDs, at most 100.
+  rpc BatchGetJobs(BatchGetJobsRequest) returns (BatchGetJobsResponse) {}
+  // CancelJob cancels a pending or running job.
+  rpc CancelJob(CancelJobRequest) returns (CancelJobResponse) {}
 }
 
 // Common
@@ -296,6 +305,8 @@ enum TriggerEventSource {
   TRIGGER_EVENT_SOURCE_UNSPECIFIED = 0;
   TRIGGER_EVENT_SOURCE_TIME_DRIVEN = 1;
   TRIGGER_EVENT_SOURCE_API_DRIVEN = 2;
+  // Run by Re:Earth CMS through RunTrigger.
+  TRIGGER_EVENT_SOURCE_CMS = 3;
 }
 
 enum TriggerTimeInterval {
@@ -319,6 +330,32 @@ message Trigger {
   optional google.protobuf.Timestamp last_triggered_at = 8;
   google.protobuf.Timestamp created_at = 9;
   google.protobuf.Timestamp updated_at = 10;
+  repeated TriggerVariable variables = 11;
+  Deployment deployment = 12;
+  optional string project_name = 13;
+}
+
+enum VariableType {
+  // A type a caller cannot set, such as a geometry.
+  VARIABLE_TYPE_UNSPECIFIED = 0;
+  VARIABLE_TYPE_TEXT = 1;
+  VARIABLE_TYPE_NUMBER = 2;
+  VARIABLE_TYPE_YES_NO = 3;
+  VARIABLE_TYPE_CHOICE = 4;
+  VARIABLE_TYPE_ARRAY = 5;
+  VARIABLE_TYPE_DATETIME = 6;
+  VARIABLE_TYPE_COLOR = 7;
+  VARIABLE_TYPE_FILE_FOLDER = 8;
+}
+
+// TriggerVariable is a workflow variable of a trigger's deployment.
+message TriggerVariable {
+  string name = 1;
+  VariableType type = 2;
+  bool required = 3;
+  // The trigger's own value, else the deployment's default.
+  google.protobuf.Value default_value = 4;
+  repeated string choices = 5;
 }
 
 message ListTriggersRequest {
@@ -326,6 +363,7 @@ message ListTriggersRequest {
   // Matches descriptions or IDs, ignoring case.
   optional string keyword = 2;
   PageRequest page = 3;
+  optional TriggerEventSource event_source = 4;
 }
 
 message ListTriggersResponse {
@@ -339,6 +377,17 @@ message GetTriggerRequest {
 
 message GetTriggerResponse {
   Trigger trigger = 1;
+}
+
+message RunTriggerRequest {
+  string trigger_id = 1;
+  // Values by variable name; omitted variables take their default.
+  map<string, google.protobuf.Value> variables = 2;
+  JobOrigin origin = 3;
+}
+
+message RunTriggerResponse {
+  Job job = 1;
 }
 
 // Jobs
@@ -360,6 +409,33 @@ message Job {
   JobStatus status = 5;
   google.protobuf.Timestamp started_at = 6;
   optional google.protobuf.Timestamp completed_at = 7;
+  optional string trigger_id = 8;
+  JobOrigin origin = 9;
+  repeated JobOutput outputs = 10;
+}
+
+// JobOrigin is where outside Flow a job was started from.
+message JobOrigin {
+  oneof origin {
+    CmsItemOrigin cms_item = 1;
+  }
+}
+
+// CmsItemOrigin is the CMS item a run was started for; names are a display snapshot.
+message CmsItemOrigin {
+  string project_id = 1;
+  string model_id = 2;
+  string item_id = 3;
+  // The CMS Flow connection that started the run.
+  string connection_id = 4;
+  string project_name = 5;
+  string model_name = 6;
+  string item_title = 7;
+}
+
+message JobOutput {
+  string name = 1;
+  string url = 2;
 }
 
 message ListJobsRequest {
@@ -379,5 +455,21 @@ message GetJobRequest {
 }
 
 message GetJobResponse {
+  Job job = 1;
+}
+
+message BatchGetJobsRequest {
+  repeated string job_ids = 1;
+}
+
+message BatchGetJobsResponse {
+  repeated Job jobs = 1;
+}
+
+message CancelJobRequest {
+  string job_id = 1;
+}
+
+message CancelJobResponse {
   Job job = 1;
 }
