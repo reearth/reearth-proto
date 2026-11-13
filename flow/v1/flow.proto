@@ -120,6 +120,14 @@ message Project {
   bool is_archived = 12;
   google.protobuf.Timestamp created_at = 13;
   google.protobuf.Timestamp updated_at = 14;
+  // The reearth-accounts ID of the user who created the project. Unset for
+  // projects created before it was recorded, or without a user.
+  optional string created_by = 15;
+  // The reearth-accounts ID of the user who last edited the project. Unset
+  // for projects no user has created or edited since it was recorded.
+  optional string updated_by = 16;
+  // Whether the project is locked against editing in Flow.
+  bool is_locked = 17;
 }
 
 // ProjectRef names a project by ID or by its alias in a workspace.
@@ -412,6 +420,10 @@ message Job {
   optional string trigger_id = 8;
   JobOrigin origin = 9;
   repeated JobOutput outputs = 10;
+  // The reearth-accounts ID of the user who started the job. Unset for runs
+  // no user started, such as scheduled and API trigger runs, and for jobs
+  // started before it was recorded.
+  optional string run_by = 11;
 }
 
 // JobOrigin is where outside Flow a job was started from.

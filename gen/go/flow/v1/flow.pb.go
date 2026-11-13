@@ -537,10 +537,18 @@ type Project struct {
 	Topics      []string          `protobuf:"bytes,9,rep,name=topics,proto3" json:"topics,omitempty"`
 	StarCount   int64             `protobuf:"varint,10,opt,name=star_count,json=starCount,proto3" json:"star_count,omitempty"`
 	// Whether the user in user-id starred the project.
-	Starred       bool                   `protobuf:"varint,11,opt,name=starred,proto3" json:"starred,omitempty"`
-	IsArchived    bool                   `protobuf:"varint,12,opt,name=is_archived,json=isArchived,proto3" json:"is_archived,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	Starred    bool                   `protobuf:"varint,11,opt,name=starred,proto3" json:"starred,omitempty"`
+	IsArchived bool                   `protobuf:"varint,12,opt,name=is_archived,json=isArchived,proto3" json:"is_archived,omitempty"`
+	CreatedAt  *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt  *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	// The reearth-accounts ID of the user who created the project. Unset for
+	// projects created before it was recorded, or without a user.
+	CreatedBy *string `protobuf:"bytes,15,opt,name=created_by,json=createdBy,proto3,oneof" json:"created_by,omitempty"`
+	// The reearth-accounts ID of the user who last edited the project. Unset
+	// for projects no user has created or edited since it was recorded.
+	UpdatedBy *string `protobuf:"bytes,16,opt,name=updated_by,json=updatedBy,proto3,oneof" json:"updated_by,omitempty"`
+	// Whether the project is locked against editing in Flow.
+	IsLocked      bool `protobuf:"varint,17,opt,name=is_locked,json=isLocked,proto3" json:"is_locked,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -671,6 +679,27 @@ func (x *Project) GetUpdatedAt() *timestamppb.Timestamp {
 		return x.UpdatedAt
 	}
 	return nil
+}
+
+func (x *Project) GetCreatedBy() string {
+	if x != nil && x.CreatedBy != nil {
+		return *x.CreatedBy
+	}
+	return ""
+}
+
+func (x *Project) GetUpdatedBy() string {
+	if x != nil && x.UpdatedBy != nil {
+		return *x.UpdatedBy
+	}
+	return ""
+}
+
+func (x *Project) GetIsLocked() bool {
+	if x != nil {
+		return x.IsLocked
+	}
+	return false
 }
 
 // ProjectRef names a project by ID or by its alias in a workspace.
@@ -2697,17 +2726,21 @@ func (x *RunTriggerResponse) GetJob() *Job {
 }
 
 type Job struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	WorkspaceId   string                 `protobuf:"bytes,2,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
-	DeploymentId  *string                `protobuf:"bytes,3,opt,name=deployment_id,json=deploymentId,proto3,oneof" json:"deployment_id,omitempty"`
-	ProjectId     *string                `protobuf:"bytes,4,opt,name=project_id,json=projectId,proto3,oneof" json:"project_id,omitempty"`
-	Status        JobStatus              `protobuf:"varint,5,opt,name=status,proto3,enum=reearth.flow.v1.JobStatus" json:"status,omitempty"`
-	StartedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
-	CompletedAt   *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=completed_at,json=completedAt,proto3,oneof" json:"completed_at,omitempty"`
-	TriggerId     *string                `protobuf:"bytes,8,opt,name=trigger_id,json=triggerId,proto3,oneof" json:"trigger_id,omitempty"`
-	Origin        *JobOrigin             `protobuf:"bytes,9,opt,name=origin,proto3" json:"origin,omitempty"`
-	Outputs       []*JobOutput           `protobuf:"bytes,10,rep,name=outputs,proto3" json:"outputs,omitempty"`
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	Id           string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	WorkspaceId  string                 `protobuf:"bytes,2,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
+	DeploymentId *string                `protobuf:"bytes,3,opt,name=deployment_id,json=deploymentId,proto3,oneof" json:"deployment_id,omitempty"`
+	ProjectId    *string                `protobuf:"bytes,4,opt,name=project_id,json=projectId,proto3,oneof" json:"project_id,omitempty"`
+	Status       JobStatus              `protobuf:"varint,5,opt,name=status,proto3,enum=reearth.flow.v1.JobStatus" json:"status,omitempty"`
+	StartedAt    *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	CompletedAt  *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=completed_at,json=completedAt,proto3,oneof" json:"completed_at,omitempty"`
+	TriggerId    *string                `protobuf:"bytes,8,opt,name=trigger_id,json=triggerId,proto3,oneof" json:"trigger_id,omitempty"`
+	Origin       *JobOrigin             `protobuf:"bytes,9,opt,name=origin,proto3" json:"origin,omitempty"`
+	Outputs      []*JobOutput           `protobuf:"bytes,10,rep,name=outputs,proto3" json:"outputs,omitempty"`
+	// The reearth-accounts ID of the user who started the job. Unset for runs
+	// no user started, such as scheduled and API trigger runs, and for jobs
+	// started before it was recorded.
+	RunBy         *string `protobuf:"bytes,11,opt,name=run_by,json=runBy,proto3,oneof" json:"run_by,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2810,6 +2843,13 @@ func (x *Job) GetOutputs() []*JobOutput {
 		return x.Outputs
 	}
 	return nil
+}
+
+func (x *Job) GetRunBy() string {
+	if x != nil && x.RunBy != nil {
+		return *x.RunBy
+	}
+	return ""
 }
 
 // JobOrigin is where outside Flow a job was started from.
@@ -3414,7 +3454,7 @@ const file_flow_v1_flow_proto_rawDesc = "" +
 	"\vtotal_count\x18\x01 \x01(\x03R\n" +
 	"totalCount\x12\x12\n" +
 	"\x04page\x18\x02 \x01(\x05R\x04page\x12\x1b\n" +
-	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\"\xe6\x03\n" +
+	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\"\xe9\x04\n" +
 	"\aProject\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12!\n" +
 	"\fworkspace_id\x18\x02 \x01(\tR\vworkspaceId\x12\x12\n" +
@@ -3436,7 +3476,14 @@ const file_flow_v1_flow_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\\\n" +
+	"updated_at\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12\"\n" +
+	"\n" +
+	"created_by\x18\x0f \x01(\tH\x00R\tcreatedBy\x88\x01\x01\x12\"\n" +
+	"\n" +
+	"updated_by\x18\x10 \x01(\tH\x01R\tupdatedBy\x88\x01\x01\x12\x1b\n" +
+	"\tis_locked\x18\x11 \x01(\bR\bisLockedB\r\n" +
+	"\v_created_byB\r\n" +
+	"\v_updated_by\"\\\n" +
 	"\n" +
 	"ProjectRef\x12\x10\n" +
 	"\x02id\x18\x01 \x01(\tH\x00R\x02id\x125\n" +
@@ -3620,7 +3667,7 @@ const file_flow_v1_flow_proto_rawDesc = "" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
 	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x05value:\x028\x01\"<\n" +
 	"\x12RunTriggerResponse\x12&\n" +
-	"\x03job\x18\x01 \x01(\v2\x14.reearth.flow.v1.JobR\x03job\"\x88\x04\n" +
+	"\x03job\x18\x01 \x01(\v2\x14.reearth.flow.v1.JobR\x03job\"\xaf\x04\n" +
 	"\x03Job\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12!\n" +
 	"\fworkspace_id\x18\x02 \x01(\tR\vworkspaceId\x12(\n" +
@@ -3635,11 +3682,13 @@ const file_flow_v1_flow_proto_rawDesc = "" +
 	"trigger_id\x18\b \x01(\tH\x03R\ttriggerId\x88\x01\x01\x122\n" +
 	"\x06origin\x18\t \x01(\v2\x1a.reearth.flow.v1.JobOriginR\x06origin\x124\n" +
 	"\aoutputs\x18\n" +
-	" \x03(\v2\x1a.reearth.flow.v1.JobOutputR\aoutputsB\x10\n" +
+	" \x03(\v2\x1a.reearth.flow.v1.JobOutputR\aoutputs\x12\x1a\n" +
+	"\x06run_by\x18\v \x01(\tH\x04R\x05runBy\x88\x01\x01B\x10\n" +
 	"\x0e_deployment_idB\r\n" +
 	"\v_project_idB\x0f\n" +
 	"\r_completed_atB\r\n" +
-	"\v_trigger_id\"R\n" +
+	"\v_trigger_idB\t\n" +
+	"\a_run_by\"R\n" +
 	"\tJobOrigin\x12;\n" +
 	"\bcms_item\x18\x01 \x01(\v2\x1e.reearth.flow.v1.CmsItemOriginH\x00R\acmsItemB\b\n" +
 	"\x06origin\"\xe8\x01\n" +
@@ -3924,6 +3973,7 @@ func file_flow_v1_flow_proto_init() {
 	if File_flow_v1_flow_proto != nil {
 		return
 	}
+	file_flow_v1_flow_proto_msgTypes[2].OneofWrappers = []any{}
 	file_flow_v1_flow_proto_msgTypes[3].OneofWrappers = []any{
 		(*ProjectRef_Id)(nil),
 		(*ProjectRef_Alias)(nil),
