@@ -950,8 +950,12 @@ type ListProjectsRequest struct {
 	IncludeArchived bool         `protobuf:"varint,5,opt,name=include_archived,json=includeArchived,proto3" json:"include_archived,omitempty"`
 	Sort            *ProjectSort `protobuf:"bytes,6,opt,name=sort,proto3" json:"sort,omitempty"`
 	Page            *PageRequest `protobuf:"bytes,7,opt,name=page,proto3" json:"page,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// Lists projects across these workspaces as one sorted, paginated page;
+	// page_info.total_count covers all of them. Workspaces the caller is not
+	// a member of are skipped. Set either this or workspace_id, not both.
+	WorkspaceIds  []string `protobuf:"bytes,8,rep,name=workspace_ids,json=workspaceIds,proto3" json:"workspace_ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListProjectsRequest) Reset() {
@@ -1029,6 +1033,13 @@ func (x *ListProjectsRequest) GetSort() *ProjectSort {
 func (x *ListProjectsRequest) GetPage() *PageRequest {
 	if x != nil {
 		return x.Page
+	}
+	return nil
+}
+
+func (x *ListProjectsRequest) GetWorkspaceIds() []string {
+	if x != nil {
+		return x.WorkspaceIds
 	}
 	return nil
 }
@@ -3496,7 +3507,7 @@ const file_flow_v1_flow_proto_rawDesc = "" +
 	"\x06values\x18\x01 \x03(\tR\x06values\"\x84\x01\n" +
 	"\vProjectSort\x127\n" +
 	"\x05field\x18\x01 \x01(\x0e2!.reearth.flow.v1.ProjectSortFieldR\x05field\x12<\n" +
-	"\tdirection\x18\x02 \x01(\x0e2\x1e.reearth.flow.v1.SortDirectionR\tdirection\"\xe2\x02\n" +
+	"\tdirection\x18\x02 \x01(\x0e2\x1e.reearth.flow.v1.SortDirectionR\tdirection\"\x87\x03\n" +
 	"\x13ListProjectsRequest\x12!\n" +
 	"\fworkspace_id\x18\x01 \x01(\tR\vworkspaceId\x12\x1d\n" +
 	"\akeyword\x18\x02 \x01(\tH\x00R\akeyword\x88\x01\x01\x12\x16\n" +
@@ -3506,7 +3517,8 @@ const file_flow_v1_flow_proto_rawDesc = "" +
 	"visibility\x88\x01\x01\x12)\n" +
 	"\x10include_archived\x18\x05 \x01(\bR\x0fincludeArchived\x120\n" +
 	"\x04sort\x18\x06 \x01(\v2\x1c.reearth.flow.v1.ProjectSortR\x04sort\x120\n" +
-	"\x04page\x18\a \x01(\v2\x1c.reearth.flow.v1.PageRequestR\x04pageB\n" +
+	"\x04page\x18\a \x01(\v2\x1c.reearth.flow.v1.PageRequestR\x04page\x12#\n" +
+	"\rworkspace_ids\x18\b \x03(\tR\fworkspaceIdsB\n" +
 	"\n" +
 	"\b_keywordB\r\n" +
 	"\v_visibility\"\x84\x01\n" +

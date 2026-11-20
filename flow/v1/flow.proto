@@ -176,6 +176,10 @@ message ListProjectsRequest {
   bool include_archived = 5;
   ProjectSort sort = 6;
   PageRequest page = 7;
+  // Lists projects across these workspaces as one sorted, paginated page;
+  // page_info.total_count covers all of them. Workspaces the caller is not
+  // a member of are skipped. Set either this or workspace_id, not both.
+  repeated string workspace_ids = 8;
 }
 
 message ListProjectsResponse {
