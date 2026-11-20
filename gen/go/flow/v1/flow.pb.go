@@ -950,12 +950,9 @@ type ListProjectsRequest struct {
 	IncludeArchived bool         `protobuf:"varint,5,opt,name=include_archived,json=includeArchived,proto3" json:"include_archived,omitempty"`
 	Sort            *ProjectSort `protobuf:"bytes,6,opt,name=sort,proto3" json:"sort,omitempty"`
 	Page            *PageRequest `protobuf:"bytes,7,opt,name=page,proto3" json:"page,omitempty"`
-	// Lists projects across these workspaces as one sorted, paginated page;
-	// page_info.total_count covers all of them. Workspaces the caller is not
-	// a member of are skipped. Set either this or workspace_id, not both.
-	WorkspaceIds  []string `protobuf:"bytes,8,rep,name=workspace_ids,json=workspaceIds,proto3" json:"workspace_ids,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	WorkspaceIds    []string     `protobuf:"bytes,8,rep,name=workspace_ids,json=workspaceIds,proto3" json:"workspace_ids,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *ListProjectsRequest) Reset() {
