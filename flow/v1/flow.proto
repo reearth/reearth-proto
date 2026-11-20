@@ -176,6 +176,7 @@ message ListProjectsRequest {
   bool include_archived = 5;
   ProjectSort sort = 6;
   PageRequest page = 7;
+  repeated string workspace_ids = 8;
 }
 
 message ListProjectsResponse {
